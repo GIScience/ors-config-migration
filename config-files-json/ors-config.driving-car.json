@@ -1,0 +1,158 @@
+{
+    "ors": {
+        "info": {
+            "base_url": "https://openrouteservice.org/",
+            "support_mail": "support@openrouteservice.heigit.org",
+            "author_tag": "openrouteservice",
+            "content_licence": "LGPL 3.0"
+        },
+        "services": {
+            "isochrones": {
+                "maximum_range_distance": [
+                    { "profiles": "any", "value": 120000 }
+                ],
+                "maximum_range_time": [
+                    {
+                        "profiles": "driving-car, driving-hgv",
+                        "value": 3600
+                    }
+                ],
+                "maximum_intervals": 10,
+                "maximum_locations": 5,
+                "allow_compute_area": true,
+                "statistics_providers": {
+                    "provider1": {
+                        "enabled": true,
+                        "provider_name": "postgresql",
+                        "provider_parameters": {
+                            "host": "localhost",
+                            "port": 5432,
+                            "db_name": "gis",
+                            "user": "admin",
+                            "password": "PASS",
+                            "table_name": "ghs_pop_2020_esri54009",
+                            "geometry_column": "rast",
+                            "postgis_version": "3"
+                        },
+                        "property_mapping": {
+                            "total_pop": "total_pop"
+                        },
+                        "attribution": "population attribution example"
+                    }
+                },
+                "attribution": "openrouteservice.org | OpenStreetMap contributors"
+            },
+            "matrix": {
+                "enabled": true,
+                "maximum_routes": 3500,
+                "maximum_routes_flexible": 25,
+                "maximum_visited_nodes": 1000000,
+                "allow_resolve_locations": true,
+                "attribution": "openrouteservice.org | OpenStreetMap contributors"
+            },
+            "routing": {
+                "mode": "normal",
+                "routing_description": "This is a directions instructions file as GPX, generated from openrouteservice",
+                "routing_name": "openrouteservice directions",
+                "sources": ["/opt/ors/osm/my-pbf.osm.pbf"],
+                "elevation_preprocessed": true,
+                "init_threads": 1,
+                "distance_approximation": true,
+                "storage_format": "LZ4",
+                "attribution": "openrouteservice.org | OpenStreetMap contributors",
+                "profiles": {
+                    "active": ["driving-car"],
+                    "default_params": {
+                        "encoder_flags_size": 8,
+                        "graphs_root_path": "/opt/ors/graphs",
+                        "elevation_provider": "multi",
+                        "elevation_cache_path": "/opt/ors/cgiar_cache",
+                        "elevation_clear_cache": false,
+                        "elevation_smoothing": true,
+                        "instructions": true,
+                        "maximum_distance": 6000000,
+                        "maximum_distance_dynamic_weights": 6000000,
+                        "maximum_distance_avoid_areas": 150000,
+                        "maximum_avoid_polygon_area": 200000000,
+                        "maximum_avoid_polygon_extent": 20000,
+                        "maximum_distance_alternative_routes": 100000,
+                        "maximum_alternative_routes": 3,
+                        "maximum_distance_round_trip_routes": 100000,
+                        "maximum_waypoints": 70,
+                        "maximum_snapping_radius": 350
+                    },
+                    "profile-driving-car": {
+                        "profiles": "driving-car",
+                        "parameters": {
+                            "encoder_options": "turn_costs=true|block_fords=false|use_acceleration=true",
+                            "elevation": true,
+                            "preparation": {
+                                "min_network_size": 200,
+                                "min_one_way_network_size": 200,
+                                "methods": {
+                                    "ch": {
+                                        "enabled": true,
+                                        "threads": 8,
+                                        "weightings": "fastest"
+                                    },
+                                    "core": {
+                                        "enabled": true,
+                                        "threads": 8,
+                                        "weightings": "fastest,shortest|edge_based=false",
+                                        "landmarks": 32,
+                                        "lmsets": "highways;allow_all"
+                                    }
+                                }
+                            },
+                            "execution": {
+                                "methods": {
+                                    "astar": {
+                                        "approximation": "BeelineSimplification",
+                                        "epsilon": 1
+                                    },
+                                    "ch": {
+                                        "disabling_allowed": true
+                                    },
+                                    "core": {
+                                        "disabling_allowed": true,
+                                        "active_landmarks": 6
+                                    }
+                                }
+                            },
+                            "ext_storages": {
+                                "WayCategory": {},
+                                "WaySurfaceType": {},
+                                "Tollways": {},
+                                "Borders": {
+                                    "boundaries": "/opt/ors/extras/borders/borders.geojson.tar.gz",
+                                    "ids": "/opt/ors/extras/borders/ids_iso.csv",
+                                    "openborders": "/opt/ors/extras/borders/openborders.csv"
+                                },
+                                "RoadAccessRestrictions": {
+                                    "use_for_warnings": true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "logging": {
+            "enabled": true,
+            "level_file": "PRODUCTION_LOGGING.json",
+            "location": "/opt/ors/logs/ors",
+            "stdout": true
+        },
+        "system_message": [
+            {
+                "active": true,
+                "text": "Preference 'fastest' has been deprecated, using 'recommended'.",
+                "condition": {
+                    "request_service": "routing",
+                    "request_preference": "fastest"
+                }
+            }
+        ]
+    }
+}
+
