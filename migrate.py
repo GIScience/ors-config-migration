@@ -39,6 +39,25 @@ def set_recursive(d, dot_string, v, orig_dot_string=''):
     set_recursive(d.get(k), '.'.join(keys), v, orig_dot_string)
 
 
+def if_exists_move_to(config_dict, jsonpath, yamlpath, join_sep=''):
+    try:
+        o = get_recursive(config_dict, jsonpath, True)
+        if join_sep:
+            o = join_sep.join(o)
+        set_recursive(config_dict, yamlpath, o)
+        print(f"Info: {jsonpath} moved to {yamlpath}")
+    except KeyError as err:
+        print(f"Info: No property for '{jsonpath}' to migrate.")
+
+
+def remove_and_output(jsondict, jsonpath, msg=''):
+    try:
+        _ = get_recursive(jsondict, jsonpath, True)
+        print(f"Info: Removed {jsonpath}{f'. {msg}' if msg else ''}")
+    except KeyError as err:
+        print(f"Info: No property for '{jsonpath}' to remove.")
+
+
 if __name__ == "__main__":
     args = sys.argv[1:]
     in_file = args[0]
