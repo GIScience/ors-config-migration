@@ -94,6 +94,52 @@ def validate_profiles(json_dict, error_list):
                 print()
 
 
+def migrate_logging(x, jsonpath, yamlpath):
+    if_exists_move_to(x, f'{jsonpath}.location', f'{yamlpath}.file.name')
+    try:
+        o = get_recursive(x, jsonpath, True)
+        if o.get('level_file'):
+            lvl_root = 'WARN'
+            lvl_org_heigit = 'INFO'
+            match o.get('level_file'):
+                case 'DEFAULT_LOGGING.json':
+                    lvl_root = 'WARN'
+                    lvl_org_heigit = 'INFO'
+                case 'PRODUCTION_LOGGING.json':
+                    lvl_root = 'WARN'
+                    lvl_org_heigit = 'WARN'
+                case 'DEBUG_LOGGING.json':
+                    lvl_root = 'ERROR'
+                    lvl_org_heigit = 'DEBUG'
+            set_recursive(x, f'{yamlpath}.level.root', lvl_root)
+            set_recursive(x, f'{yamlpath}.level.org.heigit', lvl_org_heigit)
+
+        print(f"Info: {jsonpath}.location moved to {yamlpath}.file.name.")
+        print(f"Warning: This was a best effort conversion to the new logging configuration. The logging was heavily "
+              f"reworked. Best check how to set up Logging now: "
+              f"https://giscience.github.io/openrouteservice/run-instance/configuration/spring/logging")
+    except KeyError as e:
+        print(f"Info: No property for '{jsonpath}' to migrate.")
+
+
+def migrate_mode_prop(x, jsonpath, yamlpath):
+    try:
+        mode = get_recursive(x, jsonpath, True)
+
+        match mode:
+            case 'normal':
+                mode = False
+            case 'preparation':
+                mode = True
+        if isinstance(mode, bool):
+            set_recursive(x, yamlpath, mode)
+            print(f'Info: Migrating "{jsonpath}" to "{yamlpath}". Converted string to bool.')
+        else:
+            print(f'Warning: Malformed property "{jsonpath}". Removed from configuration.')
+    except KeyError as e:
+        print(f'Info: No property for "{jsonpath}" to migrate.')
+
+
 def migrate(json_config_path, yaml_config_path):
     """
     Program to migrate an existing ors-config.json to the new ors-config.yml format.
