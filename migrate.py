@@ -119,6 +119,23 @@ def migrate(json_config_path, yaml_config_path):
 
     print(f'Migrating file from {json_config_path} to {yaml_config_path}')
 
+    print("\n--- Migrating ors.api_settings ---")
+    if_exists_move_to(x, 'ors.api_settings.cors.allowed.origins', 'ors.cors.allowed_origins', ', ')
+    if_exists_move_to(x, 'ors.api_settings.cors.allowed.headers', 'ors.cors.allowed_headers', ', ')
+    if_exists_move_to(x, 'ors.api_settings.cors.preflight_max_age', 'ors.cors.preflight_max_age')
+    remove_and_output(x, 'ors.api_settings.cors.exposed', 'Option was removed. For available options see '
+                                                          'https://giscience.github.io/openrouteservice/run-instance/configuration/ors/cors/')
+
+    print("\n--- Migrating ors.system_messages ---")
+    if_exists_move_to(x, 'ors.system_messages', 'ors.messages')
+
+    print("\n--- Migrating ors.info ---")
+    if_exists_move_to(x, 'ors.info.base_url', 'ors.endpoints.routing.gpx_base_url')
+    if_exists_move_to(x, 'ors.info.support_mail', 'ors.endpoints.routing.gpx_support_mail')
+    if_exists_move_to(x, 'ors.info.author_tag', 'ors.endpoints.routing.gpx_author')
+    if_exists_move_to(x, 'ors.info.content_licence', 'ors.endpoints.routing.gpx_content_licence')
+    remove_and_output(x, 'ors.info.swagger_documentation_url', 'TODO: removed?')
+
     try:
         OrsConfigYML.model_validate(x)
     except ValidationError as e:
