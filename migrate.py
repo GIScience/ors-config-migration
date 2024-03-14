@@ -4,6 +4,41 @@ import sys
 
 from os.path import join, dirname
 
+
+def get_recursive(d, dot_string, remove=False):
+    keys = dot_string.split('.')
+    k = keys.pop(0)
+    v = d.get(k, {})
+    if k not in d:
+        raise KeyError(f"Key '{k}' not found.")
+    if not keys:
+        if remove:
+            del d[k]
+        return v
+    result = get_recursive(v, '.'.join(keys), remove)
+    # remove empty parent
+    if remove and not d[k]:
+        del d[k]
+    return result
+
+
+def set_recursive(d, dot_string, v, orig_dot_string=''):
+    if orig_dot_string == '':
+        orig_dot_string = dot_string
+    created = False
+    keys = dot_string.split('.')
+    k = keys.pop(0)
+    if k not in d:
+        d[k] = {}
+        created = True
+    if not keys:
+        if k in d and not created:
+            print(f"Warning: {orig_dot_string} already contains: {d.get(k)} and will be overwritten with: {v}")
+        d[k] = v
+        return
+    set_recursive(d.get(k), '.'.join(keys), v, orig_dot_string)
+
+
 if __name__ == "__main__":
     args = sys.argv[1:]
     in_file = args[0]
