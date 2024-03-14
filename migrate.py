@@ -8,6 +8,7 @@ from pydantic import ValidationError
 
 from models.yml_config import OrsConfigYML
 from models.json_config import OrsConfigJSON, Parameters, ProfileEntry
+from models.json_config_ignore_extras import OrsConfigJSONIgnoreExtras
 
 
 def get_recursive(d, dot_string, remove=False):
@@ -174,6 +175,14 @@ def migrate(json_config_path, yaml_config_path):
 
     print("\n--- Migrating ors.system_messages ---")
     if_exists_move_to(x, 'ors.system_messages', 'ors.messages')
+
+    print("\n--- Migrating ors.logging ---")
+    migrate_logging(x, 'ors.logging', 'logging')
+
+    print("\n--- Migrating ors.services ---")
+    if_exists_move_to(x, 'ors.services', 'ors.endpoints')
+
+    migrate_mode_prop(x, 'ors.endpoints.routing.mode', 'ors.engine.preparation_mode')
 
     print("\n--- Migrating ors.info ---")
     if_exists_move_to(x, 'ors.info.base_url', 'ors.endpoints.routing.gpx_base_url')
