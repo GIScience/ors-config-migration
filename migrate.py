@@ -160,6 +160,13 @@ def migrate_mode_prop(x, jsonpath, yamlpath):
         info(f'No property for "{jsonpath}" to migrate.')
 
 
+def migrate_elevation(x):
+    if_exists_move_to(x, 'ors.services.routing.elevation_preprocessed', 'ors.engine.elevation.preprocessed')
+    for key in ['elevation_provider', 'elevation_cache_path', 'elevation_cache_clear']:
+        if_exists_move_to(x, f'ors.services.routing.profiles.default_params.{key}',
+                          f'ors.engine.elevation.{key.replace("elevation_", "")}')
+
+
 def migrate_messages(x):
     jsonpath = 'ors.system_message'
     yamlpath = 'ors.messages'
@@ -217,6 +224,9 @@ def migrate(json_config_path, yaml_config_path):
 
     print("\n--- Migrating ors.logging ---")
     migrate_logging(x, 'ors.logging', 'logging')
+
+    print("\n--- Migrating elevation provider ---")
+    migrate_elevation(x)
 
     print("\n--- Migrating ors.services ---")
     if_exists_move_to(x, 'ors.services', 'ors.endpoints')
