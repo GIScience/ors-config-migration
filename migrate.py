@@ -243,6 +243,12 @@ def migrate(json_config_path, yaml_config_path):
                       'Option was removed. For settings related to the swagger-ui see '
                       'https://springdoc.org/properties.html#_swagger_ui_properties')
 
+    print("\n--- Remove kafka settings")
+    kafka_text = ('Option was removed due maintenance effort. If you want to keep using this, you need to run an older '
+                  'ORS version or migrate the feature yourself!')
+    remove_and_output(x, 'ors.kafka_test_cluster', kafka_text)
+    remove_and_output(x, 'ors.kafka_consumer', kafka_text)
+
     try:
         OrsConfigYML.model_validate(x)
     except ValidationError as e:
