@@ -160,6 +160,26 @@ def migrate_mode_prop(x, jsonpath, yamlpath):
         info(f'No property for "{jsonpath}" to migrate.')
 
 
+def migrate_messages(x):
+    jsonpath = 'ors.system_message'
+    yamlpath = 'ors.messages'
+    try:
+        msgs = get_recursive(x, jsonpath, True)
+        for [i, msg] in enumerate(msgs):
+            if 'condition' in msg:
+                new_conditions = []
+                for [key, value] in msg['condition'].items():
+                    new_conditions.append({key: value})
+                msg['condition'] = new_conditions
+                info(
+                    f'Migrating message {i + 1} conditions from Object with key-values to List of Condition Entries '
+                    f'with single key-values"')
+        set_recursive(x, yamlpath, msgs)
+        info(f"{jsonpath} moved to {yamlpath}")
+    except KeyError as err:
+        info(f"No property for '{jsonpath}' to migrate.")
+
+
 def migrate(json_config_path, yaml_config_path):
     """
     Program to migrate an existing ors-config.json to the new ors-config.yml format.
@@ -193,7 +213,7 @@ def migrate(json_config_path, yaml_config_path):
                                                           'https://giscience.github.io/openrouteservice/run-instance/configuration/ors/cors/')
 
     print("\n--- Migrating ors.system_messages ---")
-    if_exists_move_to(x, 'ors.system_messages', 'ors.messages')
+    migrate_messages(x)
 
     print("\n--- Migrating ors.logging ---")
     migrate_logging(x, 'ors.logging', 'logging')
