@@ -160,6 +160,17 @@ def migrate_mode_prop(x, jsonpath, yamlpath):
         info(f'No property for "{jsonpath}" to migrate.')
 
 
+def migrate_sources(x, jsonpath, yamlpath):
+    try:
+        sources = get_recursive(x, jsonpath, True)
+        set_recursive(x, yamlpath, sources[0])
+        info(f'Migrating "{jsonpath}" to "{yamlpath}".'
+             f'Converted list of strings to string. Used first item from sources.')
+    except KeyError as e:
+        warning(
+            f'Info: No property for "{jsonpath}" to migrate? An ORS instance without sources doesn\'t make much sense.')
+
+
 def migrate_elevation(x):
     if_exists_move_to(x, 'ors.services.routing.elevation_preprocessed', 'ors.engine.elevation.preprocessed')
     for key in ['elevation_provider', 'elevation_cache_path', 'elevation_cache_clear']:
@@ -229,9 +240,21 @@ def migrate(json_config_path, yaml_config_path):
     migrate_elevation(x)
 
     print("\n--- Migrating ors.services ---")
-    if_exists_move_to(x, 'ors.services', 'ors.endpoints')
+    migrate_mode_prop(x, 'ors.services.routing.mode', 'ors.engine.preparation_mode')
+    migrate_sources(x, 'ors.services.routing.sources', 'ors.engine.source_file')
+    if_exists_move_to(x, 'ors.services.routing.init_threads', 'ors.engine.init_threads')
+    if_exists_move_to(x,
+                      'ors.services.isochrones.fastisochrones.profiles.default_params',
+                      'ors.engine.profile_default.preparation.methods.fastisochrones')
 
-    migrate_mode_prop(x, 'ors.endpoints.routing.mode', 'ors.engine.preparation_mode')
+    remove_and_output(x, 'ors.services.matrix.allow_resolve_locations', 'Option was removed.')
+    remove_and_output(x, 'ors.services.routing.distance_approximation', 'Option was removed.')
+
+    if_exists_move_to(x, 'ors.services.routing.profiles', 'ors.engine.profiles')
+    if_exists_move_to(x, 'ors.services', 'ors.endpoints')
+    if_exists_move_to(x, 'ors.endpoints.routing.description', 'ors.endpoints.routing.gpx_description')
+    if_exists_move_to(x, 'ors.endpoints.routing.routing_description', 'ors.endpoints.routing.gpx_description')
+    if_exists_move_to(x, 'ors.endpoints.routing.routing_name', 'ors.endpoints.routing.gpx_name')
 
     print("\n--- Migrating ors.info ---")
     if_exists_move_to(x, 'ors.info.base_url', 'ors.endpoints.routing.gpx_base_url')

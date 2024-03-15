@@ -218,10 +218,15 @@ class PrepCORE(PrepLM):
     lmsets: Optional[str] = None
 
 
+class PrepFastIso(PrepCH):
+    maxcellnodes: Optional[int] = None
+
+
 class PrepMethods(Parent):
     lm: Optional[PrepLM] = None
     ch: Optional[PrepCH] = None
     core: Optional[PrepCORE] = None
+    fastisochrones: Optional[PrepFastIso] = None
 
 
 class Preparation(Parent):
