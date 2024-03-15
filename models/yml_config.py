@@ -87,9 +87,13 @@ class Pattern(Parent):
     file: Optional[str] = None
 
 
+class Org(Parent):
+    heigit: Optional[str] = None
+
+
 class Level(Parent):
     root: Optional[str] = None
-    org_heigit: Optional[str] = Field(None, alias='org.heigit')
+    org: Optional[Org] = None
 
 
 class Logging(Parent):

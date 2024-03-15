@@ -134,7 +134,7 @@ def migrate_logging(x, jsonpath, yamlpath):
             set_recursive(x, f'{yamlpath}.level.root', lvl_root)
             set_recursive(x, f'{yamlpath}.level.org.heigit', lvl_org_heigit)
 
-        info(f"{jsonpath}.location moved to {yamlpath}.file.name.")
+        info(f"{jsonpath}.level_file migrated to {yamlpath}.level.root & {yamlpath}.level.org.heigit")
         warning(f"This was a best effort conversion to the new logging configuration. The logging was heavily "
                 f"reworked. Best check how to set up Logging now: "
                 f"https://giscience.github.io/openrouteservice/run-instance/configuration/spring/logging")
