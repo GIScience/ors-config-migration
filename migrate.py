@@ -238,7 +238,10 @@ def migrate(json_config_path, yaml_config_path):
     if_exists_move_to(x, 'ors.info.support_mail', 'ors.endpoints.routing.gpx_support_mail')
     if_exists_move_to(x, 'ors.info.author_tag', 'ors.endpoints.routing.gpx_author')
     if_exists_move_to(x, 'ors.info.content_licence', 'ors.endpoints.routing.gpx_content_licence')
-    remove_and_output(x, 'ors.info.swagger_documentation_url', 'TODO: removed?')
+    remove_and_output(x,
+                      'ors.info.swagger_documentation_url',
+                      'Option was removed. For settings related to the swagger-ui see '
+                      'https://springdoc.org/properties.html#_swagger_ui_properties')
 
     try:
         OrsConfigYML.model_validate(x)
