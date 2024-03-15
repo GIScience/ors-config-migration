@@ -10,6 +10,25 @@ from models.yml_config import OrsConfigYML
 from models.json_config import OrsConfigJSON, Parameters, ProfileEntry
 from models.json_config_ignore_extras import OrsConfigJSONIgnoreExtras
 
+BLACK = '\033[30m'
+RED = '\033[31m'
+GREEN = '\033[32m'
+YELLOW = '\033[33m'  # orange on some systems
+
+RESET = '\033[0m'  # called to return to standard terminal text color
+
+
+def info(text):
+    print(GREEN + "Info: " + text + RESET)
+
+
+def warning(text):
+    print(YELLOW + "Warning: " + text + RESET)
+
+
+def error(text):
+    print(RED + "Error: " + text + RESET)
+
 
 def get_recursive(d, dot_string, remove=False):
     keys = dot_string.split('.')
@@ -39,7 +58,7 @@ def set_recursive(d, dot_string, v, orig_dot_string=''):
         created = True
     if not keys:
         if k in d and not created:
-            print(f"Warning: {orig_dot_string} already contains: {d.get(k)} and will be overwritten with: {v}")
+            warning(f"{orig_dot_string} already contains: {d.get(k)} and will be overwritten with: {v}")
         d[k] = v
         return
     set_recursive(d.get(k), '.'.join(keys), v, orig_dot_string)
@@ -51,17 +70,17 @@ def if_exists_move_to(config_dict, jsonpath, yamlpath, join_sep=''):
         if join_sep:
             o = join_sep.join(o)
         set_recursive(config_dict, yamlpath, o)
-        print(f"Info: {jsonpath} moved to {yamlpath}")
+        info(f"{jsonpath} moved to {yamlpath}")
     except KeyError as err:
-        print(f"Info: No property for '{jsonpath}' to migrate.")
+        info(f"No property for '{jsonpath}' to migrate.")
 
 
 def remove_and_output(jsondict, jsonpath, msg=''):
     try:
         _ = get_recursive(jsondict, jsonpath, True)
-        print(f"Info: Removed {jsonpath}{f'. {msg}' if msg else ''}")
+        warning(f"Removed {jsonpath}{f'. {msg}' if msg else ''}")
     except KeyError as err:
-        print(f"Info: No property for '{jsonpath}' to remove.")
+        info(f"No property for '{jsonpath}' to remove.")
 
 
 def validate_profiles(json_dict, error_list):
@@ -115,12 +134,12 @@ def migrate_logging(x, jsonpath, yamlpath):
             set_recursive(x, f'{yamlpath}.level.root', lvl_root)
             set_recursive(x, f'{yamlpath}.level.org.heigit', lvl_org_heigit)
 
-        print(f"Info: {jsonpath}.location moved to {yamlpath}.file.name.")
-        print(f"Warning: This was a best effort conversion to the new logging configuration. The logging was heavily "
-              f"reworked. Best check how to set up Logging now: "
-              f"https://giscience.github.io/openrouteservice/run-instance/configuration/spring/logging")
+        info(f"{jsonpath}.location moved to {yamlpath}.file.name.")
+        warning(f"This was a best effort conversion to the new logging configuration. The logging was heavily "
+                f"reworked. Best check how to set up Logging now: "
+                f"https://giscience.github.io/openrouteservice/run-instance/configuration/spring/logging")
     except KeyError as e:
-        print(f"Info: No property for '{jsonpath}' to migrate.")
+        info(f"No property for '{jsonpath}' to migrate.")
 
 
 def migrate_mode_prop(x, jsonpath, yamlpath):
@@ -134,11 +153,11 @@ def migrate_mode_prop(x, jsonpath, yamlpath):
                 mode = True
         if isinstance(mode, bool):
             set_recursive(x, yamlpath, mode)
-            print(f'Info: Migrating "{jsonpath}" to "{yamlpath}". Converted string to bool.')
+            info(f'Migrating "{jsonpath}" to "{yamlpath}". Converted string to bool.')
         else:
-            print(f'Warning: Malformed property "{jsonpath}". Removed from configuration.')
+            warning(f'Malformed property "{jsonpath}". Removed from configuration.')
     except KeyError as e:
-        print(f'Info: No property for "{jsonpath}" to migrate.')
+        info(f'No property for "{jsonpath}" to migrate.')
 
 
 def migrate(json_config_path, yaml_config_path):
