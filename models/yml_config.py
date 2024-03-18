@@ -148,6 +148,25 @@ class Fastisochrones(Parent):
     maximum_range_time: Optional[List[MaximumRangeTimeItem]] = None
 
 
+class ProviderParameters(Parent):
+    host: Optional[str] = None
+    port: Optional[int] = None
+    user: Optional[str] = None
+    password: Optional[str] = None
+    db_name: Optional[str] = None
+    table_name: Optional[str] = None
+    geometry_column: Optional[str] = None
+    postgis_version: Optional[str] = None
+
+
+class StatisticsProvider(Parent):
+    enabled: Optional[bool] = None
+    attribution: Optional[str] = None
+    provider_name: Optional[str] = None
+    property_mapping: Optional[Dict[str, str]] = None
+    provider_parameters: Optional[ProviderParameters] = None
+
+
 class Isochrones(Parent):
     enabled: Optional[bool] = None
     attribution: Optional[str] = None
@@ -159,6 +178,7 @@ class Isochrones(Parent):
     maximum_range_time_default: Optional[int] = None
     maximum_range_time: Optional[List[MaximumRangeTimeItem]] = None
     fastisochrones: Optional[Fastisochrones] = None
+    statistics_providers: Optional[Dict[str, StatisticsProvider]] = None
 
 
 class Snap(Parent):
