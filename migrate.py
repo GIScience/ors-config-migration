@@ -1,9 +1,8 @@
 import json
-import yaml
 import sys
-
 from os.path import join, dirname
 
+import yaml
 from pydantic import ValidationError
 
 from models.yml_config import OrsConfigYML
