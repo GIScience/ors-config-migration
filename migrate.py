@@ -7,6 +7,7 @@ from os.path import join, dirname
 from pydantic import ValidationError
 
 from models.yml_config import OrsConfigYML
+from models.yml_config_ignore_extras import OrsConfigYMLIgnoreExtras
 
 BLACK = '\033[30m'
 RED = '\033[31m'
@@ -58,35 +59,43 @@ def set_recursive(d, dot_string, v, orig_dot_string=''):
         created = True
     if not keys:
         if k in d and not created:
-            warning(f"{orig_dot_string} already contains: {d.get(k)} and will be overwritten with: {v}")
+            warning(f"'{orig_dot_string}' already contains: {d.get(k)} and will be overwritten with: {v}")
         d[k] = v
         return
     set_recursive(d.get(k), '.'.join(keys), v, orig_dot_string)
 
 
-def if_exists_move_to(config_dict, jsonpath, yamlpath, join_sep=''):
+def if_exists_move_to(config_dict, jsonpath, yamlpath, join_sep='', orig_path_prefix=''):
     try:
         o = get_recursive(config_dict, jsonpath, True)
         if join_sep:
             o = join_sep.join(o)
         set_recursive(config_dict, yamlpath, o)
-        info(f"{jsonpath} moved to {yamlpath}")
+        info(
+            f"'{orig_path_prefix if orig_path_prefix + '.' else ''}{jsonpath}' moved to "
+            f"'{orig_path_prefix if orig_path_prefix + '.' else ''}{yamlpath}'")
     except KeyError as err:
         if DEBUG:
             info(f"No property for '{jsonpath}' to migrate.")
 
 
-def remove_and_output(jsondict, jsonpath, msg=''):
+def remove_and_output(jsondict, jsonpath, results, msg='', orig_path=''):
     try:
         _ = get_recursive(jsondict, jsonpath, True)
-        warning(f"Removed {jsonpath}{f'. {msg}' if msg else ''}")
+        warning_text = f"Removed '{orig_path if orig_path else jsonpath}'{f'. {msg}' if msg else ''}"
+        warning(warning_text)
+        results['warnings'].append(warning_text)
     except KeyError as err:
         if DEBUG:
             info(f"No property for '{jsonpath}' to remove.")
 
 
-def migrate_logging(x, jsonpath, yamlpath):
-    if_exists_move_to(x, f'{jsonpath}.location', f'{yamlpath}.file.name')
+def migrate_logging(x, jsonpath, yamlpath, results):
+    log_location = get_recursive(x, f'{jsonpath}.location', True)
+    log_location += '/ors.log'
+    set_recursive(x, f'{yamlpath}.file.name', log_location)
+    info(f"Migrated '{jsonpath}.location' to '{yamlpath}.file.name' and appended /ors.log as logfile name")
+
     try:
         o = get_recursive(x, jsonpath, True)
         if o.get('level_file'):
@@ -106,9 +115,11 @@ def migrate_logging(x, jsonpath, yamlpath):
             set_recursive(x, f'{yamlpath}.level.org.heigit', lvl_org_heigit)
 
         info(f"{jsonpath}.level_file migrated to {yamlpath}.level.root & {yamlpath}.level.org.heigit")
-        warning(f"This was a best effort conversion to the new logging configuration. The logging was heavily "
-                f"reworked. Best check how to set up Logging now: "
-                f"https://giscience.github.io/openrouteservice/run-instance/configuration/spring/logging")
+        warning_text = f"This was a best effort conversion to the new logging configuration. The logging was heavily " \
+                       f"reworked. Best check how to set up Logging now: " \
+                       f"https://giscience.github.io/openrouteservice/run-instance/configuration/spring/logging"
+        warning(warning_text)
+        results['warnings'].append(warning_text)
     except KeyError as e:
         if DEBUG:
             info(f"No property for '{jsonpath}' to migrate.")
@@ -265,9 +276,7 @@ def migrate_fast_iso_profiles(x, profiles_path, engine_path):
             info(f'No property for "{profiles_path}" to migrate.')
 
 
-def migrate_messages(x):
-    jsonpath = 'ors.system_message'
-    yamlpath = 'ors.messages'
+def migrate_messages(x, jsonpath, yamlpath):
     try:
         msgs = get_recursive(x, jsonpath, True)
         for [i, msg] in enumerate(msgs):
@@ -294,28 +303,29 @@ def migrate(json_config_path, yaml_config_path):
     see https://giscience.github.io/openrouteservice/run-instance/configuration
     """
     results = {
-        "actions_needed": [],
-        "info": [],
         "warnings": [],
-        "errors": []
+        "validation_errors": []
     }
     with open(join(dirname(__file__), str(json_config_path)), 'r') as f:
         x = json.load(f)
 
     print(f'Migrating file from {json_config_path} to {yaml_config_path}')
 
-    print("\n--- Migrating ors.api_settings ---")
-    if_exists_move_to(x, 'ors.api_settings.cors.allowed.origins', 'ors.cors.allowed_origins', ', ')
-    if_exists_move_to(x, 'ors.api_settings.cors.allowed.headers', 'ors.cors.allowed_headers', ', ')
-    if_exists_move_to(x, 'ors.api_settings.cors.preflight_max_age', 'ors.cors.preflight_max_age')
-    remove_and_output(x, 'ors.api_settings.cors.exposed', 'Option was removed. For available options see '
-                                                          'https://giscience.github.io/openrouteservice/run-instance/configuration/ors/cors/')
+    if 'api_settings' in x['ors']:
+        print("\n--- Migrating ors.api_settings ---")
+        if_exists_move_to(x, 'ors.api_settings.cors.allowed.origins', 'ors.cors.allowed_origins', ', ')
+        if_exists_move_to(x, 'ors.api_settings.cors.allowed.headers', 'ors.cors.allowed_headers', ', ')
+        if_exists_move_to(x, 'ors.api_settings.cors.preflight_max_age', 'ors.cors.preflight_max_age')
+        remove_and_output(x, 'ors.api_settings.cors.exposed', results, 'Option was removed. For available options see '
+                                                                       'https://giscience.github.io/openrouteservice/run-instance/configuration/ors/cors/')
 
-    print("\n--- Migrating ors.system_messages ---")
-    migrate_messages(x)
+    if 'system_message' in x['ors']:
+        print("\n--- Migrating ors.system_message ---")
+        migrate_messages(x, 'ors.system_message', 'ors.messages')
 
-    print("\n--- Migrating ors.logging ---")
-    migrate_logging(x, 'ors.logging', 'logging')
+    if 'logging' in x['ors']:
+        print("\n--- Migrating ors.logging ---")
+        migrate_logging(x, 'ors.logging', 'logging', results)
 
     print("\n--- Migrating elevation provider ---")
     migrate_elevation(x)
@@ -353,30 +363,58 @@ def migrate(json_config_path, yaml_config_path):
     if_exists_move_to(x, 'ors.endpoints.routing.routing_description', 'ors.endpoints.routing.gpx_description')
     if_exists_move_to(x, 'ors.endpoints.routing.routing_name', 'ors.endpoints.routing.gpx_name')
 
-    print("\n--- Migrating ors.info ---")
-    if_exists_move_to(x, 'ors.info.base_url', 'ors.endpoints.routing.gpx_base_url')
-    if_exists_move_to(x, 'ors.info.support_mail', 'ors.endpoints.routing.gpx_support_mail')
-    if_exists_move_to(x, 'ors.info.author_tag', 'ors.endpoints.routing.gpx_author')
-    if_exists_move_to(x, 'ors.info.content_licence', 'ors.endpoints.routing.gpx_content_licence')
-    remove_and_output(x,
-                      'ors.info.swagger_documentation_url',
-                      'Option was removed. For settings related to the swagger-ui see '
-                      'https://springdoc.org/properties.html#_swagger_ui_properties')
+    if 'info' in x['ors']:
+        print("\n--- Migrating ors.info ---")
+        if_exists_move_to(x, 'ors.info.base_url', 'ors.endpoints.routing.gpx_base_url')
+        if_exists_move_to(x, 'ors.info.support_mail', 'ors.endpoints.routing.gpx_support_mail')
+        if_exists_move_to(x, 'ors.info.author_tag', 'ors.endpoints.routing.gpx_author')
+        if_exists_move_to(x, 'ors.info.content_licence', 'ors.endpoints.routing.gpx_content_licence')
+        remove_and_output(x,
+                          'ors.info.swagger_documentation_url',
+                          results,
+                          'Option was removed. For settings related to the swagger-ui see '
+                          'https://springdoc.org/properties.html#_swagger_ui_properties')
 
-    print("\n--- Remove kafka settings")
-    kafka_text = ('Option was removed due maintenance effort. If you want to keep using this, you need to run an older '
-                  'ORS version or migrate the feature yourself!')
-    remove_and_output(x, 'ors.kafka_test_cluster', kafka_text)
-    remove_and_output(x, 'ors.kafka_consumer', kafka_text)
+    if any(key.startswith('kafka') for key in x['ors']):
+        print("\n--- Removing kafka settings")
+        kafka_text = ('Option was removed due maintenance effort. If you want to keep using this, you need to run an '
+                      'older ORS version or migrate the feature yourself!')
+        remove_and_output(x, 'ors.kafka_test_cluster', results, kafka_text)
+        remove_and_output(x, 'ors.kafka_consumer', results, kafka_text)
+
+    print()
 
     try:
-        OrsConfigYML.model_validate(x)
+        new_config_schema = OrsConfigYML.model_validate(x)
     except ValidationError as e:
-        raise e
+        results['validation_errors'].append(f"Unknown config property found: {e}")
+        new_config_schema = OrsConfigYMLIgnoreExtras.model_validate(x)
+    new_config = new_config_schema.model_dump(exclude_unset=True, by_alias=True)
 
     with open(yaml_config_path, 'w') as f:
-        f.writelines(yaml.dump(x))
+        f.writelines(yaml.dump(new_config))
         print(f'Wrote yml output to {f.name}')
+
+    print()
+    print()
+    info('--- Migration finished ---')
+    info('Filepaths have NOT been adjusted due to heavy rework in file locations. Please adjust '
+         'your paths (source files, graphs, elevation_cache, logs) according to your setup.'
+         ' Check the default paths in https://github.com/GIScience/openrouteservice/blob/main/ors-config.yml.'
+         ' For further help see https://giscience.github.io/openrouteservice/run-instance/')
+    info('You may have to act on the warnings below if the settings are relevant to your setup.')
+    info('For questions please use https://ask.openrouteserice.org to get our attention.')
+    if len(results['warnings']) > 0:
+        info(f'--- {len(results["warnings"])} warnings encountered ---')
+        for w in results["warnings"]:
+            warning(w)
+    print()
+    if len(results["validation_errors"]) > 0:
+        info('--- Validation Errors encountered ---')
+        info('The following properties could not be migrated and are removed in the converted config file.')
+        info('Please check if those were valid configurations in the first place:')
+        for e in results["validation_errors"]:
+            error(e)
 
 
 if __name__ == "__main__":
