@@ -7,7 +7,8 @@ from migrate import migrate, if_exists_move_to
 
 
 class Test(TestCase):
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         if os.path.exists('./outputs'):
             shutil.rmtree('./outputs')
         os.mkdir('./outputs')
