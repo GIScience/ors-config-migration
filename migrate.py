@@ -138,11 +138,125 @@ def migrate_sources(x, jsonpath, yamlpath):
             f'Info: No property for "{jsonpath}" to migrate? An ORS instance without sources doesn\'t make much sense.')
 
 
+def migrate_profiles(x, jsonpath, yamlpath, results):
+    profiles = get_recursive(x, jsonpath, True)
+    if 'default_params' in profiles:
+        info(f'Migrating "{jsonpath}.default_params":')
+        if_exists_move_to(x, 'ors.services.routing.default_params.maximum_segment_distance_with_dynamic_weights',
+                          'ors.engine.profile_default.maximum_distance_dynamic_weights')
+        if 'maximum_segment_distance_with_dynamic_weights' in profiles['default_params']:
+            del profiles['default_params']['maximum_segment_distance_with_dynamic_weights']
+        if_exists_move_to(x, 'ors.services.routing.default_params.graphs_root_path', 'ors.engine.graphs_root_path')
+        if 'graphs_root_path' in profiles['default_params']:
+            del profiles['default_params']['graphs_root_path']
+        profile_defaults = get_recursive(profiles, 'default_params', True)
+        profile_defaults = migrate_profile('default_params', profile_defaults, results, True)
+
+        set_recursive(x, 'ors.engine.profile_default', profile_defaults)
+        info(f'Migrated "{jsonpath}.default_params" to "ors.engine.profile_default"')
+        print()
+
+    new_profiles = {key.replace('profile-', ''): value for [key, value] in profiles.items()}
+    valid_profiles = [
+        "car", "hgv", "bike-regular", "bike-mountain", "bike-road", "bike-electric", "walking", "hiking", "wheelchair",
+        "public-transport"
+    ]
+    # Try to match profile name to valid profiles
+    for p in new_profiles.get('active'):
+        orig_p = p
+        if p.split('-')[0] in ['driving', 'cycling', 'foot']:
+            common_prefix = p.split('-')[0]
+            p = '-'.join(p.split('-')[1:])
+            warning(f'Removed common prefix "{common_prefix}" from profile entry {jsonpath}.{orig_p}')
+        if p not in valid_profiles:
+            for vp in valid_profiles:
+                if vp in p:
+                    warning(f"Renamed profile {orig_p} to {vp}.")
+                    p = vp
+            if p not in valid_profiles:
+                warning(f"Couldn't match dynamic profile name {orig_p} to any valid profile name {valid_profiles}."
+                        f" For profile configurations to work it needs to be one of {valid_profiles}."
+                        f" For further info see https://giscience.github.io/openrouteservice/run-instance/configuration"
+                        f"/ors/engine/profiles")
+                results['warnings'].append()
+                p = 'car'
+
+        if not p == orig_p:
+            new_profiles[p] = new_profiles[orig_p]
+            del new_profiles[orig_p]
+            info(f"Migrated profile entry ors.services.routing.profiles.{orig_p} to ors.services.routing.profiles.{p}")
+        new_profiles[p]['enabled'] = True
+        info(f"Migrated 'ors.services.routing.profiles.active' to 'ors.services.routing.profiles.{p}.enabled=True'")
+        new_profiles[p]['profile'] = orig_p
+        info(f"Migrated 'ors.services.routing.profiles.{p}.profiles' to 'ors.services.routing.profiles.{p}.profile'")
+
+    del new_profiles['active']
+
+    for [k, p] in new_profiles.items():
+        print()
+        new_profiles[k] = migrate_profile(k, p, results)
+    print()
+    set_recursive(x, yamlpath, new_profiles, jsonpath)
+
+    info(f"Migrated '{jsonpath}' to '{yamlpath}'")
+    print()
+
+
+def migrate_profile(p_name, p_value, results, is_default_params=False):
+    if is_default_params:
+        new_profile = {**p_value}
+    else:
+        info(f"Migrating 'ors.services.routing.profiles.{p_name}':")
+        new_profile = {**p_value.get('parameters'), **{'profile': p_value.get('profiles')},
+                       "enabled": p_value.get('enabled', False)}
+        info(f"Migrated '{p_name}.parameters.*' to '{p_name}.*'")
+    remove_and_output(new_profile, 'preparation.min_one_way_network_size', results,
+                      'Option was removed (see https://github.com/GIScience/openrouteservice/pull/1683).', '')
+    p_exec_methods = new_profile.get('execution', {}).get('methods', {})
+    if p_exec_methods:
+        new_methods = {**p_exec_methods}
+        for m in new_profile.get('execution', {}).get('methods', {}):
+            remove_and_output(new_methods, f'{m}.disabling_allowed', results,
+                              'Option was removed (see https://github.com/GIScience/openrouteservice/pull/1683).',
+                              'execution.methods.disabling_allowed')
+        if new_methods:
+            new_profile['execution']['methods'] = new_methods
+        else:
+            del new_profile['execution']['methods']
+    if 'encoder_options' in new_profile:
+        if isinstance(new_profile['encoder_options'], str):
+            orig_eo = new_profile['encoder_options']
+            eo = {}
+            for e_option in orig_eo.strip().split('|'):
+                key, value = e_option.split('=')
+                eo[key] = True if value in ['true', 'True'] else False
+            new_profile['encoder_options'] = eo
+            info(f"Migrated 'encoder_options' from pipe separated string to object")
+    return new_profile
+
+
 def migrate_elevation(x):
     if_exists_move_to(x, 'ors.services.routing.elevation_preprocessed', 'ors.engine.elevation.preprocessed')
     for key in ['elevation_provider', 'elevation_cache_path', 'elevation_cache_clear']:
         if_exists_move_to(x, f'ors.services.routing.profiles.default_params.{key}',
                           f'ors.engine.elevation.{key.replace("elevation_", "")}')
+
+
+def migrate_fast_iso_profiles(x, profiles_path, engine_path):
+    if_exists_move_to(x,
+                      f'{profiles_path}.default_params',
+                      f'{engine_path}.profile_default.preparation.methods.fastisochrones')
+    try:
+        fast_iso_profiles = get_recursive(x, profiles_path)
+        profiles = list(fast_iso_profiles.keys())
+        for profile in profiles:
+            if_exists_move_to(x,
+                              f'{profiles_path}.{profile}',
+                              f'{engine_path}.profiles.{profile}.preparation.methods.fastisochrones')
+
+    except KeyError as e:
+        if DEBUG:
+            info(f'No property for "{profiles_path}" to migrate.')
 
 
 def migrate_messages(x):
@@ -203,15 +317,31 @@ def migrate(json_config_path, yaml_config_path):
     migrate_mode_prop(x, 'ors.services.routing.mode', 'ors.engine.preparation_mode')
     migrate_sources(x, 'ors.services.routing.sources', 'ors.engine.source_file')
     if_exists_move_to(x, 'ors.services.routing.init_threads', 'ors.engine.init_threads')
-    if_exists_move_to(x,
-                      'ors.services.isochrones.fastisochrones.profiles.default_params',
-                      'ors.engine.profile_default.preparation.methods.fastisochrones')
 
-    remove_and_output(x, 'ors.services.matrix.allow_resolve_locations', 'Option was removed.')
-    remove_and_output(x, 'ors.services.routing.distance_approximation', 'Option was removed.')
+    remove_and_output(x, 'ors.services.matrix.allow_resolve_locations', results, 'Option was removed.')
+    remove_and_output(x, 'ors.services.routing.distance_approximation', results, 'Option was removed.')
 
-    if_exists_move_to(x, 'ors.services.routing.profiles', 'ors.engine.profiles')
+    print('\n--- Migrate ors.services.routing.profiles ---')
+
+    migrate_profiles(x, 'ors.services.routing.profiles', 'ors.engine.profiles', results)
+
+    migrate_fast_iso_profiles(x, 'ors.services.isochrones.fastisochrones.profiles', 'ors.engine')
+
     if_exists_move_to(x, 'ors.services', 'ors.endpoints')
+
+    if_exists_move_to(
+        x,
+        'ors.engine.profile_default.maximum_avoid_polygon_area',
+        'ors.endpoints.routing.maximum_avoid_polygon_area')
+    if_exists_move_to(
+        x,
+        'ors.engine.profile_default.maximum_avoid_polygon_extent',
+        'ors.endpoints.routing.maximum_avoid_polygon_extent')
+    if_exists_move_to(
+        x,
+        'ors.engine.profile_default.maximum_alternative_routes',
+        'ors.endpoints.routing.maximum_alternative_routes')
+
     if_exists_move_to(x, 'ors.endpoints.routing.description', 'ors.endpoints.routing.gpx_description')
     if_exists_move_to(x, 'ors.endpoints.routing.routing_description', 'ors.endpoints.routing.gpx_description')
     if_exists_move_to(x, 'ors.endpoints.routing.routing_name', 'ors.endpoints.routing.gpx_name')
