@@ -15,6 +15,8 @@ YELLOW = '\033[33m'  # orange on some systems
 
 RESET = '\033[0m'  # called to return to standard terminal text color
 
+DEBUG = False
+
 
 def info(text):
     print(GREEN + "Info: " + text + RESET)
@@ -70,7 +72,8 @@ def if_exists_move_to(config_dict, jsonpath, yamlpath, join_sep=''):
         set_recursive(config_dict, yamlpath, o)
         info(f"{jsonpath} moved to {yamlpath}")
     except KeyError as err:
-        info(f"No property for '{jsonpath}' to migrate.")
+        if DEBUG:
+            info(f"No property for '{jsonpath}' to migrate.")
 
 
 def remove_and_output(jsondict, jsonpath, msg=''):
@@ -78,7 +81,8 @@ def remove_and_output(jsondict, jsonpath, msg=''):
         _ = get_recursive(jsondict, jsonpath, True)
         warning(f"Removed {jsonpath}{f'. {msg}' if msg else ''}")
     except KeyError as err:
-        info(f"No property for '{jsonpath}' to remove.")
+        if DEBUG:
+            info(f"No property for '{jsonpath}' to remove.")
 
 
 def migrate_logging(x, jsonpath, yamlpath):
@@ -106,7 +110,8 @@ def migrate_logging(x, jsonpath, yamlpath):
                 f"reworked. Best check how to set up Logging now: "
                 f"https://giscience.github.io/openrouteservice/run-instance/configuration/spring/logging")
     except KeyError as e:
-        info(f"No property for '{jsonpath}' to migrate.")
+        if DEBUG:
+            info(f"No property for '{jsonpath}' to migrate.")
 
 
 def migrate_mode_prop(x, jsonpath, yamlpath):
@@ -124,7 +129,8 @@ def migrate_mode_prop(x, jsonpath, yamlpath):
         else:
             warning(f'Malformed property "{jsonpath}". Removed from configuration.')
     except KeyError as e:
-        info(f'No property for "{jsonpath}" to migrate.')
+        if DEBUG:
+            info(f'No property for "{jsonpath}" to migrate.')
 
 
 def migrate_sources(x, jsonpath, yamlpath):
@@ -276,7 +282,8 @@ def migrate_messages(x):
         set_recursive(x, yamlpath, msgs)
         info(f"{jsonpath} moved to {yamlpath}")
     except KeyError as err:
-        info(f"No property for '{jsonpath}' to migrate.")
+        if DEBUG:
+            info(f"No property for '{jsonpath}' to migrate.")
 
 
 def migrate(json_config_path, yaml_config_path):
