@@ -259,7 +259,6 @@ class Routing(Parent):
     distance_approximation: Optional[bool] = None
     elevation_preprocessed: Optional[bool] = None
     profiles: Optional[Dict[str, Any]] = None
-    storage_format: Optional[str] = None
 
 
 class Services(Parent):
