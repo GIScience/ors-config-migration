@@ -2,3 +2,5 @@
 .idea
 /ors-config.yml
 /tests/outputs/
+
+**/__pycache__/
