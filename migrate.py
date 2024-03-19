@@ -427,4 +427,4 @@ if __name__ == "__main__":
         print("Usage: python migrate.py ./your-ors-config.json [./ors-config.yml]")
     elif len(args) == 2:
         out_file = args[1]
-    migrate(in_file, "./ors-config.yml")
+    migrate(in_file, out_file)
