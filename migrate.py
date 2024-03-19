@@ -402,7 +402,7 @@ def migrate(json_config_path, yaml_config_path):
          ' Check the default paths in https://github.com/GIScience/openrouteservice/blob/main/ors-config.yml.'
          ' For further help see https://giscience.github.io/openrouteservice/run-instance/')
     info('You may have to act on the warnings below if the settings are relevant to your setup.')
-    info('For questions please use https://ask.openrouteserice.org to get our attention.')
+    info('For questions please use https://ask.openrouteservice.org to get our attention.')
     if len(results['warnings']) > 0:
         info(f'--- {len(results["warnings"])} warnings encountered ---')
         for w in results["warnings"]:
