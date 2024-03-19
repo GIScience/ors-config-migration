@@ -23,3 +23,15 @@ python3 -m pip install -r requirements.txt
 # run migration script
 python3 migrate.py <your-ors-json-config-path> [<optional-output-ors-yml-config-path>]
 ```
+
+## Testing
+
+If you want to run the schema tests locally:
+
+```shell
+# install pytest
+python3 -m pip install pytest
+
+# run tests
+python3 -m pytest tests
+```
