@@ -2,8 +2,9 @@
 
 this is a tool for migrating from ors-config.json to ors-config.yml.
 
-As with Release 8 a lot of config options have been restructured, this tool should help people
-to migrate their configs from JSON to YAML format without hassle, and inform about changes made.
+As with Release 8 a lot of config options have been restructured, this tool should help with
+migrating configs from JSON to YAML format, inform about changes made and point out action steps
+that need to be done manually.
 
 ## Usage
 
@@ -14,8 +15,8 @@ as the current directory is mounted into the container as a volume:
 docker run --rm -v ${PWD}:/app heigit/ors-config-migration <path-to-your-ors-config.json>
 ```
 
-Please examine the container logs (should print to stdout) to see if there are any warnings or
-errors concerning the migration.
+Please examine the container logs carefully (should print to stdout) to see if there are any
+warnings or errors concerning the migration and fix issues as needed.
 
 The migrated `ors-config.yml` will be written to the current working directory.
 
@@ -28,13 +29,10 @@ Clone the repository and run the following commands in the repo-root directory:
 ```shell
 # create virtual python environment
 python3 -m venv .venv
-
 # activate venv
 source .venv/bin/activate
-
 # install requirements
 python3 -m pip install -r requirements.txt
-
 # run migration script
 python3 migrate.py <your-ors-json-config-path> [<optional-output-ors-yml-config-path>]
 ```
