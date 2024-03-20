@@ -11,7 +11,7 @@ To migrate your `ors-config.json`, run the following command in the folder with 
 as the current directory is mounted into the container as a volume:
 
 ```shell
-docker run --rm -v ${PWD}:/app openrouteservice/ors-config-migrate <path-to-your-ors-config.json>  
+docker run --rm -v ${PWD}:/app openrouteservice/ors-config-migration <path-to-your-ors-config.json>  
 ```
 
 Please examine the container logs (should print to stdout) to see if there are any warnings or
