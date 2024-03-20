@@ -426,6 +426,12 @@ if __name__ == "__main__":
         exit(1)
     elif len(args) == 2:
         out_file = args[1]
+    elif len(args) == 1:
+        if Path(out_file).exists():
+            error(f"The default output file {out_file} already exists.")
+            info("Aborting. Please move the file or provide an output file name as second argument to overwrite "
+                 "existing files.")
+            exit(1)
     in_file = args[0]
     # Check if in_file and out_file are absolute paths if not join with current working directory
     if not Path(in_file).is_absolute():
