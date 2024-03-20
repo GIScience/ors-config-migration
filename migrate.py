@@ -419,7 +419,7 @@ def migrate(json_config_path, yaml_config_path):
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    out_file = join(dirname(__file__), 'ors-config.yml')
+    out_file = join(Path.cwd(), 'ors-config.yml')
 
     if not 0 < len(args) < 3:
         print("Usage: python migrate.py ./your-ors-config.json [./ors-config.yml]")
