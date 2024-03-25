@@ -181,21 +181,31 @@ def migrate_profiles(x, jsonpath, yamlpath, results):
     # Try to match profile name to valid profiles
     for p in new_profiles.get('active'):
         orig_p = p
-        if p.split('-')[0] in ['driving', 'cycling', 'foot']:
+        if p.split('-')[0] in ['driving', 'foot']:
             common_prefix = p.split('-')[0]
             p = '-'.join(p.split('-')[1:])
-            warning(f'Removed common prefix "{common_prefix}" from profile entry {jsonpath}.{orig_p}')
+            warning_text = f'Removed common prefix "{common_prefix}" from profile entry {jsonpath}.{orig_p}'
+            warning(warning_text)
+            results['warnings'].append(warning_text)
+        if p.split('-')[0] == 'cycling':
+            cycling_prefix = p.split('-')[0]
+            p = 'bike-' + '-'.join(p.split('-')[1:])
+            warning_text = f'Changed common prefix "{cycling_prefix}" from profile entry {jsonpath}.{orig_p} to "bike".'
+            warning(warning_text)
+            results['warnings'].append(warning_text)
         if p not in valid_profiles:
             for vp in valid_profiles:
                 if vp in p:
                     warning(f"Renamed profile {orig_p} to {vp}.")
                     p = vp
             if p not in valid_profiles:
-                warning(f"Couldn't match dynamic profile name {orig_p} to any valid profile name {valid_profiles}."
-                        f" For profile configurations to work it needs to be one of {valid_profiles}."
-                        f" For further info see https://giscience.github.io/openrouteservice/run-instance/configuration"
-                        f"/ors/engine/profiles")
-                results['warnings'].append()
+                warning_text = f"Couldn't match dynamic profile name {orig_p} to any valid profile name {valid_profiles}."
+                f" For profile configurations to work it needs to be one of {valid_profiles}."
+                f" Defaulting to 'car' -> Please adjust as needed."
+                f" For further info see https://giscience.github.io/openrouteservice/run-instance/configuration"
+                f"/ors/engine/profiles"
+                warning(warning_text)
+                results['warnings'].append(warning_text)
                 p = 'car'
 
         if not p == orig_p:
