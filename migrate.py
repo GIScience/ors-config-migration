@@ -256,7 +256,7 @@ def migrate_profile(p_name, p_value, results, is_default_params=False):
             eo = {}
             for e_option in orig_eo.strip().split('|'):
                 key, value = e_option.split('=')
-                eo[key] = True if value in ['true', 'True'] else False
+                eo[key] = value
             new_profile['encoder_options'] = eo
             info(f"Migrated 'encoder_options' from pipe separated string to object")
     return new_profile
