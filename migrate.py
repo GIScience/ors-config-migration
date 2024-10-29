@@ -428,6 +428,12 @@ def migrate_7_to_8(json_config_path, yaml_config_path):
 
 
 def migrate_8_to_9(old_yaml_config_path, new_yaml_config_path):
+        """
+        Program to migrate an existing ors-config.yml from version 8 to the ors-config.yml format of version 9.
+        Includes validation of config input and reports on invalid or non-transferable entries.
+        For further information and configuration of ORS via environment variables
+        see https://giscience.github.io/openrouteservice/run-instance/configuration
+        """
         pass
 if __name__ == "__main__":
     args = sys.argv[1:]
