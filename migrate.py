@@ -305,9 +305,9 @@ def migrate_messages(x, jsonpath, yamlpath):
             info(f"No property for '{jsonpath}' to migrate.")
 
 
-def migrate(json_config_path, yaml_config_path):
+def migrate_7_to_8(json_config_path, yaml_config_path):
     """
-    Program to migrate an existing ors-config.json to the new ors-config.yml format.
+    Program to migrate an existing ors-config.json from version 7 to the ors-config.yml format of version 8.
     Includes validation of config input and reports on invalid or non-transferable entries.
     For further information and configuration of ORS via environment variables
     see https://giscience.github.io/openrouteservice/run-instance/configuration
@@ -448,4 +448,4 @@ if __name__ == "__main__":
         in_file = join(Path.cwd(), in_file)
     if not Path(out_file).is_absolute():
         out_file = join(Path.cwd(), out_file)
-    migrate(in_file, out_file)
+    migrate_7_to_8(in_file, out_file)

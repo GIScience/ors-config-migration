@@ -3,7 +3,7 @@ import shutil
 from os.path import join, dirname
 from unittest import TestCase
 
-from migrate import migrate, if_exists_move_to
+from migrate import migrate_7_to_8, if_exists_move_to
 
 
 class Test(TestCase):
@@ -16,17 +16,17 @@ class Test(TestCase):
     def test_migrate_sample_config(self):
         in_file = '../config-files-json/ors-config-sample.json'
 
-        migrate(join(dirname(__file__), in_file), "./outputs/ors-config-sample-migrated.yml")
+        migrate_7_to_8(join(dirname(__file__), in_file), "./outputs/ors-config-sample-migrated.yml")
 
     def test_migrate_test_config(self):
         in_file = '../config-files-json/test-config.json'
 
-        migrate(join(dirname(__file__), in_file), "./outputs/test-config-migrated.yml")
+        migrate_7_to_8(join(dirname(__file__), in_file), "./outputs/test-config-migrated.yml")
 
     def test_migrate_production_config(self):
         in_file = '../config-files-json/ors-config.driving-car.json'
 
-        migrate(join(dirname(__file__), in_file), "./outputs/ors-config.driving-car-migrated.yml")
+        migrate_7_to_8(join(dirname(__file__), in_file), "./outputs/ors-config.driving-car-migrated.yml")
 
     def test_if_exists_move_to(self):
         test_dict = {"info": {
