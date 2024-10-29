@@ -427,6 +427,8 @@ def migrate_7_to_8(json_config_path, yaml_config_path):
             error(e)
 
 
+def migrate_8_to_9(old_yaml_config_path, new_yaml_config_path):
+        pass
 if __name__ == "__main__":
     args = sys.argv[1:]
     out_file = join(Path.cwd(), 'ors-config.yml')
