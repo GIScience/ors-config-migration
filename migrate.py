@@ -307,7 +307,7 @@ def migrate_messages(x, jsonpath, yamlpath):
 
 def migrate_7_to_8(json_config_path, yaml_config_path):
     """
-    Program to migrate an existing ors-config.json to the new ors-config.yml format.
+    Program to migrate an existing ors-config.json from version 7 to the ors-config.yml format of version 8.
     Includes validation of config input and reports on invalid or non-transferable entries.
     For further information and configuration of ORS via environment variables
     see https://giscience.github.io/openrouteservice/run-instance/configuration
