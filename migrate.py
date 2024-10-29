@@ -7,7 +7,9 @@ import yaml
 from pydantic import ValidationError
 
 from models.yml_config_8 import OrsConfigYML8
+from models.yml_config_9 import OrsConfigYML9
 from models.yml_config_ignore_extras_8 import OrsConfigYMLIgnoreExtras8
+from models.yml_config_ignore_extras_9 import OrsConfigYMLIgnoreExtras9
 
 BLACK = '\033[30m'
 RED = '\033[31m'
@@ -412,6 +414,135 @@ def migrate_7_to_8(json_config_path, yaml_config_path):
          'your paths (source files, graphs, elevation_cache, logs) according to your setup.'
          ' Check the default paths in https://github.com/GIScience/openrouteservice/blob/main/ors-config.yml.'
          ' For further help see https://giscience.github.io/openrouteservice/run-instance/')
+    info('You may have to act on the warnings below if the settings are relevant to your setup.')
+    info('For questions please use https://ask.openrouteservice.org to get our attention.')
+    if len(results['warnings']) > 0:
+        info(f'--- {len(results["warnings"])} warnings encountered ---')
+        for w in results["warnings"]:
+            warning(w)
+    print()
+    if len(results["validation_errors"]) > 0:
+        info('--- Validation Errors encountered ---')
+        info('The following properties could not be migrated and are removed in the converted config file.')
+        info('Please check if those were valid configurations in the first place:')
+        for e in results["validation_errors"]:
+            error(e)
+
+
+def migrate_8_to_9(old_yaml_config_path, new_yaml_config_path):
+    """
+    Program to migrate an existing ors-config.yml from version 8 to the ors-config.yml format of version 9.
+    Includes validation of config input and reports on invalid or non-transferable entries.
+    For further information and configuration of ORS via environment variables
+    see https://giscience.github.io/openrouteservice/run-instance/configuration
+    """
+    results = {
+        "warnings": [],
+        "validation_errors": []
+    }
+    with open(join(dirname(__file__), str(old_yaml_config_path)), 'r') as f:
+        x = yaml.safe_load(f)
+
+    print(f'Migrating file from {old_yaml_config_path} to {new_yaml_config_path}')
+
+    if "endpoints" in x['ors']:
+        print(f"\n--- Migrating ors.endpoints ---")
+        if_exists_move_to(x, f'ors.endpoints.matrix.u_turn_costs', f'ors.endpoints.matrix.u_turn_cost')
+
+    if "engine" in x['ors']:
+        print(f"\n--- Migrating ors.engine ---")
+
+        properties_service = [
+            "execution",
+            "force_turn_costs",
+            "maximum_distance",
+            "maximum_distance_alternative_routes",
+            "maximum_distance_avoid_areas",
+            "maximum_distance_dynamic_weights",
+            "maximum_distance_round_trip_routes",
+            "maximum_snapping_radius",
+            "maximum_speed_lower_bound",
+            "maximum_visited_nodes",
+            "maximum_waypoints",
+        ]
+
+        properties_build = [
+            "source_file",
+            "elevation",
+            "encoder_options",
+            "elevation_smoothing",
+            "encoder_flags_size",
+            "instructions",
+            "optimize",
+            "traffic",
+            "location_index_resolution",
+            "location_index_search_iterations",
+            "interpolate_bridges_and_tunnels",
+            "preparation",
+            "gtfs_file",
+            "ext_storages"
+        ]
+
+        for prop in properties_service:
+            if_exists_move_to(x, f'ors.engine.profile_default.{prop}',
+                              f'ors.engine.profile_default.service.{prop}')
+
+        for prop in properties_build:
+            if_exists_move_to(x, f'ors.engine.profile_default.{prop}',
+                              f'ors.engine.profile_default.build.{prop}')
+
+        profiles = list(x["ors"]["engine"]["profiles"].keys()).copy()
+        for profile in profiles:
+            profile_new = x["ors"]["engine"]["profiles"][profile]["profile"]
+            if_exists_move_to(x, f'ors.engine.profiles.{profile}.profile',
+                              f'ors.engine.profiles.{profile_new}.encoder_name')
+            if_exists_move_to(x, f'ors.engine.profiles.{profile}.enabled',
+                              f'ors.engine.profiles.{profile_new}.enabled')
+            for prop in properties_build:
+                if_exists_move_to(x, f'ors.engine.profiles.{profile}.{prop}',
+                                  f'ors.engine.profiles.{profile_new}.build.{prop}')
+            for prop in properties_service:
+                if_exists_move_to(x, f'ors.engine.profiles.{profile}.{prop}',
+                                  f'ors.engine.profiles.{profile_new}.service.{prop}')
+
+            if profile_new != profile:
+                remove_and_output(x, f'ors.engine.profiles.{profile}', results)
+
+        if_exists_move_to(x, f'ors.engine.source_file',
+                          f'ors.engine.profile_default.build.source_file')
+
+        if_exists_move_to(x, f'ors.engine.graphs_root_path', f'ors.engine.profile_default.graph_path')
+
+    level_string = "springdoc"
+    if level_string in x:
+        print(f"\n--- Migrating {level_string} ---")
+        if_exists_move_to(x, f'springdoc.swagger-ui',
+                          f'spring.swagger-ui')
+        if_exists_move_to(x, f'springdoc.api-docs',
+                          f'spring.api-docs')
+        if_exists_move_to(x, f'springdoc.packages-to-scan',
+                          f'spring.packages-to-scan')
+        if_exists_move_to(x, f'springdoc.pathsToMatch',
+                          f'spring.pathsToMatch')
+
+    try:
+        new_config_schema = OrsConfigYML9.model_validate(x)
+    except ValidationError as e:
+        if DEBUG:
+            print(e)
+        results['validation_errors'].append(f"Unknown config property found: {e}")
+        new_config_schema = OrsConfigYMLIgnoreExtras9.model_validate(x)
+    new_config = new_config_schema.model_dump(exclude_unset=True, by_alias=True)
+
+    print()
+
+    with open(new_yaml_config_path, 'w') as f:
+        f.writelines(yaml.dump(new_config))
+        print(f'Wrote yml output to {f.name}')
+
+    print()
+    print()
+    info('--- Migration finished ---')
     info('You may have to act on the warnings below if the settings are relevant to your setup.')
     info('For questions please use https://ask.openrouteservice.org to get our attention.')
     if len(results['warnings']) > 0:
