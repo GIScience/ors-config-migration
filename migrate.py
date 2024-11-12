@@ -4,10 +4,12 @@ from os.path import join, dirname
 from pathlib import Path
 
 import yaml
-from pydantic import ValidationError
+from pydantic import ValidationError, ConfigDict
 
-from models.yml_config import OrsConfigYML
-from models.yml_config_ignore_extras import OrsConfigYMLIgnoreExtras
+from models.yml_config_8 import OrsConfigYML8
+from models.yml_config_9 import OrsConfigYML9
+from models.yml_config_ignore_extras_8 import OrsConfigYMLIgnoreExtras8
+# from models.yml_config_ignore_extras_9 import OrsConfigYMLIgnoreExtras9, Service
 
 BLACK = '\033[30m'
 RED = '\033[31m'
@@ -16,7 +18,7 @@ YELLOW = '\033[33m'  # orange on some systems
 
 RESET = '\033[0m'  # called to return to standard terminal text color
 
-DEBUG = False
+DEBUG = True
 
 
 def info(text):
@@ -395,10 +397,10 @@ def migrate_7_to_8(json_config_path, yaml_config_path):
     print()
 
     try:
-        new_config_schema = OrsConfigYML.model_validate(x)
+        new_config_schema = OrsConfigYML8.model_validate(x)
     except ValidationError as e:
         results['validation_errors'].append(f"Unknown config property found: {e}")
-        new_config_schema = OrsConfigYMLIgnoreExtras.model_validate(x)
+        new_config_schema = OrsConfigYMLIgnoreExtras8.model_validate(x)
     new_config = new_config_schema.model_dump(exclude_unset=True, by_alias=True)
 
     with open(yaml_config_path, 'w') as f:
@@ -434,7 +436,175 @@ def migrate_8_to_9(old_yaml_config_path, new_yaml_config_path):
         For further information and configuration of ORS via environment variables
         see https://giscience.github.io/openrouteservice/run-instance/configuration
         """
-        pass
+        results = {
+            "warnings": [],
+            "validation_errors": []
+        }
+        with open(join(dirname(__file__), str(old_yaml_config_path)), 'r') as f:
+            x = yaml.safe_load(f)
+
+        print(f'Migrating file from {old_yaml_config_path} to {new_yaml_config_path}')
+
+        level_string = "endpoints"
+        if level_string in x['ors']:
+            print(f"\n--- Migrating ors.{level_string} ---")
+            if_exists_move_to(x, f'ors.{level_string}.matrix.u_turn_costs', f'ors.{level_string}.matrix.u_turn_cost')
+
+        level_string = "engine"
+        if level_string in x['ors']:
+            print(f"\n--- Migrating ors.{level_string} ---")
+            remove_and_output(x, f'ors.{level_string}.graphs_root_path', results)
+
+            if_exists_move_to(x, f'ors.{level_string}.profile_default.execution',
+                              f'ors.{level_string}.profile_default.service.execution')
+            if_exists_move_to(x, f'ors.{level_string}.profile_default.force_turn_costs',
+                              f'ors.{level_string}.profile_default.service.force_turn_costs')
+            if_exists_move_to(x, f'ors.{level_string}.profile_default.maximum_distance',
+                              f'ors.{level_string}.profile_default.service.maximum_distance')
+            if_exists_move_to(x, f'ors.{level_string}.profile_default.maximum_distance_alternative_routes',
+                              f'ors.{level_string}.profile_default.service.maximum_distance_alternative_routes')
+            if_exists_move_to(x, f'ors.{level_string}.profile_default.maximum_distance_avoid_areas',
+                              f'ors.{level_string}.profile_default.service.maximum_distance_avoid_areas')
+            if_exists_move_to(x, f'ors.{level_string}.profile_default.maximum_distance_dynamic_weights',
+                              f'ors.{level_string}.profile_default.service.maximum_distance_dynamic_weights')
+            if_exists_move_to(x, f'ors.{level_string}.profile_default.maximum_distance_round_trip_routes',
+                              f'ors.{level_string}.profile_default.service.maximum_distance_round_trip_routes')
+            if_exists_move_to(x, f'ors.{level_string}.profile_default.maximum_snapping_radius',
+                              f'ors.{level_string}.profile_default.service.maximum_snapping_radius')
+            if_exists_move_to(x, f'ors.{level_string}.profile_default.maximum_speed_lower_bound',
+                              f'ors.{level_string}.profile_default.service.maximum_speed_lower_bound')
+            if_exists_move_to(x, f'ors.{level_string}.profile_default.maximum_visited_nodes',
+                              f'ors.{level_string}.profile_default.service.maximum_visited_nodes')
+            if_exists_move_to(x, f'ors.{level_string}.profile_default.maximum_waypoints',
+                              f'ors.{level_string}.profile_default.service.maximum_waypoints')
+
+            if_exists_move_to(x, f'ors.{level_string}.source_file',
+                              f'ors.{level_string}.profile_default.build.source_file')
+            if_exists_move_to(x, f'ors.{level_string}.profile_default.elevation',
+                              f'ors.{level_string}.profile_default.build.elevation')
+            if_exists_move_to(x, f'ors.{level_string}.profile_default.profile',
+                              f'ors.{level_string}.profile_default.build.profile')
+            if_exists_move_to(x, f'ors.{level_string}.profile_default.graph_path',
+                              f'ors.{level_string}.profile_default.build.graph_path')
+            if_exists_move_to(x, f'ors.{level_string}.profile_default.encoder_options',
+                              f'ors.{level_string}.profile_default.build.encoder_options')
+            if_exists_move_to(x, f'ors.{level_string}.profile_default.elevation_smoothing',
+                              f'ors.{level_string}.profile_default.build.elevation_smoothing')
+            if_exists_move_to(x, f'ors.{level_string}.profile_default.encoder_flags_size',
+                              f'ors.{level_string}.profile_default.build.encoder_flags_size')
+            if_exists_move_to(x, f'ors.{level_string}.profile_default.instructions',
+                              f'ors.{level_string}.profile_default.build.instructions')
+            if_exists_move_to(x, f'ors.{level_string}.profile_default.optimize',
+                              f'ors.{level_string}.profile_default.build.optimize')
+            if_exists_move_to(x, f'ors.{level_string}.profile_default.traffic',
+                              f'ors.{level_string}.profile_default.build.traffic')
+            if_exists_move_to(x, f'ors.{level_string}.profile_default.location_index_resolution',
+                              f'ors.{level_string}.profile_default.build.location_index_resolution')
+            if_exists_move_to(x, f'ors.{level_string}.profile_default.location_index_search_iterations',
+                              f'ors.{level_string}.profile_default.build.location_index_search_iterations')
+            if_exists_move_to(x, f'ors.{level_string}.profile_default.interpolate_bridges_and_tunnels',
+                              f'ors.{level_string}.profile_default.build.interpolate_bridges_and_tunnels')
+            if_exists_move_to(x, f'ors.{level_string}.profile_default.preparation',
+                              f'ors.{level_string}.profile_default.build.preparation')
+            if_exists_move_to(x, f'ors.{level_string}.profile_default.gtfs_file',
+                              f'ors.{level_string}.profile_default.build.gtfs_file')
+
+            profiles = [
+                "car",
+                "hgv",
+                "bike-regular",
+                "bike-mountain",
+                "bike-road",
+                "bike-electric",
+                "walking",
+                "hiking",
+                "wheelchair",
+                "public-transport"
+            ]
+            print(x["ors"]["engine"]["profiles"].keys())
+            for profile in profiles:
+                profile_new = x["ors"][level_string]["profiles"][profile]["profile"]
+                if_exists_move_to(x, f'ors.{level_string}.source_file',
+                                  f'ors.{level_string}.profiles.{profile}.build.source_file')
+                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.elevation',
+                                  f'ors.{level_string}.profiles.{profile_new}.build.elevation')
+                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.graph_path',
+                                  f'ors.{level_string}.profiles.{profile_new}.build.graph_path')
+                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.encoder_options',
+                                  f'ors.{level_string}.profiles.{profile_new}.build.encoder_options')
+                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.elevation_smoothing',
+                                  f'ors.{level_string}.profiles.{profile_new}.build.elevation_smoothing')
+                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.encoder_flags_size',
+                                  f'ors.{level_string}.profiles.{profile_new}.build.encoder_flags_size')
+                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.instructions',
+                                  f'ors.{level_string}.profiles.{profile_new}.build.instructions')
+                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.optimize',
+                                  f'ors.{level_string}.profiles.{profile_new}.build.optimize')
+                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.traffic',
+                                  f'ors.{level_string}.profiles.{profile_new}.build.traffic')
+                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.location_index_resolution',
+                                  f'ors.{level_string}.profiles.{profile_new}.build.location_index_resolution')
+                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.location_index_search_iterations',
+                                  f'ors.{level_string}.profiles.{profile_new}.build.location_index_search_iterations')
+                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.interpolate_bridges_and_tunnels',
+                                  f'ors.{level_string}.profiles.{profile_new}.build.interpolate_bridges_and_tunnels')
+                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.preparation',
+                                  f'ors.{level_string}.profiles.{profile_new}.build.preparation')
+                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.gtfs_file',
+                                  f'ors.{level_string}.profiles.{profile_new}.build.gtfs_file')
+
+                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.execution',
+                                  f'ors.{level_string}.profiles.{profile}.service.execution')
+                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.force_turn_costs',
+                                  f'ors.{level_string}.profiles.{profile}.service.force_turn_costs')
+                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.maximum_distance',
+                                  f'ors.{level_string}.profiles.{profile}.service.maximum_distance')
+                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.maximum_distance_alternative_routes',
+                                  f'ors.{level_string}.profiles.{profile}.service.maximum_distance_alternative_routes')
+                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.maximum_distance_avoid_areas',
+                                  f'ors.{level_string}.profiles.{profile}.service.maximum_distance_avoid_areas')
+                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.maximum_distance_dynamic_weights',
+                                  f'ors.{level_string}.profiles.{profile}.service.maximum_distance_dynamic_weights')
+                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.maximum_distance_round_trip_routes',
+                                  f'ors.{level_string}.profiles.{profile}.service.maximum_distance_round_trip_routes')
+                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.maximum_snapping_radius',
+                                  f'ors.{level_string}.profiles.{profile}.service.maximum_snapping_radius')
+                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.maximum_speed_lower_bound',
+                                  f'ors.{level_string}.profiles.{profile}.service.maximum_speed_lower_bound')
+                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.maximum_visited_nodes',
+                                  f'ors.{level_string}.profiles.{profile}.service.maximum_visited_nodes')
+                if_exists_move_to(x, f'',
+                                  f'ors.{level_string}.profiles.{profile}.service.maximum_waypoints')
+
+                remove_and_output(x, f'ors.{level_string}.profiles.{profile}.profile', results)
+
+
+        level_string = "springdoc"
+        if level_string in x:
+            print(f"\n--- Migrating {level_string} ---")
+            if_exists_move_to(x, f'springdoc.swagger-ui',
+                              f'spring.swagger-ui')
+            if_exists_move_to(x, f'springdoc.api-docs',
+                              f'spring.api-docs')
+            if_exists_move_to(x, f'springdoc.packages-to-scan',
+                              f'spring.packages-to-scan')
+            if_exists_move_to(x, f'springdoc.pathsToMatch',
+                              f'spring.pathsToMatch')
+
+        try:
+            new_config_schema = OrsConfigYML9.model_validate(x)
+        except ValidationError as e:
+            if DEBUG:
+                print(e)
+            results['validation_errors'].append(f"Unknown config property found: {e}")
+            OrsConfigYML9.model_config = ConfigDict(extra='allow')
+            new_config_schema = OrsConfigYML9.model_validate(x)
+        new_config = new_config_schema.model_dump(exclude_unset=True, by_alias=True)
+
+        with open(new_yaml_config_path, 'w') as f:
+            f.writelines(yaml.dump(new_config))
+            print(f'Wrote yml output to {f.name}')
+
 if __name__ == "__main__":
     args = sys.argv[1:]
     from_version = int(args[1])
