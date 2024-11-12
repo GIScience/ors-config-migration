@@ -25,10 +25,15 @@ class ServerServlet(Parent):
     context_path: Optional[str] = Field(None, alias='context-path')
 
 
+class Tomcat(Parent):
+    model_config = ConfigDict(extra='allow')
+
+
 class Server(Parent):
     port: Optional[int] = None
     error: Optional[Error] = None
     servlet: Optional[ServerServlet] = None
+    tomcat: Optional[Tomcat] = None
 
 
 class SpringProfiles(Parent):
@@ -51,6 +56,10 @@ class Spring(Parent):
     profiles: Optional[SpringProfiles] = None
     mvc: Optional[Mvc] = None
     main: Optional[Main] = None
+    swagger_ui: Optional[SwaggerUi] = Field(None, alias='swagger-ui')
+    api_docs: Optional[ApiDocs] = Field(None, alias='api-docs')
+    packages_to_scan: Optional[str] = Field(None, alias='packages-to-scan')
+    pathsToMatch: Optional[str] = None
 
 
 class SyntaxHighlight(Parent):
@@ -71,13 +80,6 @@ class ApiDocs(Parent):
     version: Optional[str] = None
 
 
-class Springdoc(Parent):
-    swagger_ui: Optional[SwaggerUi] = Field(None, alias='swagger-ui')
-    api_docs: Optional[ApiDocs] = Field(None, alias='api-docs')
-    packages_to_scan: Optional[str] = Field(None, alias='packages-to-scan')
-    pathsToMatch: Optional[str] = None
-
-
 class File(Parent):
     name: Optional[str] = None
 
@@ -94,6 +96,7 @@ class Org(Parent):
 class Level(Parent):
     root: Optional[str] = None
     org: Optional[Org] = None
+    org_heigit: Optional[str] = Field(None, alias='org.heigit')
 
 
 class Logging(Parent):
@@ -186,11 +189,15 @@ class Snap(Parent):
     attribution: Optional[str] = None
 
 
+class Export(Parent):
+    pass
+
 class Endpoints(Parent):
     routing: Optional[Routing] = None
     matrix: Optional[Matrix] = None
     isochrones: Optional[Isochrones] = None
-    Snap: Optional[Union[Snap, Dict]] = None  # using Union[Snap, Dict] to workaround Error:
+    snap: Optional[Union[Snap, Dict]] = None  # using Union[Snap, Dict] to workaround Error:
+    export: Optional[Export] = None
     # ors.endpoints.Snap Input should be None
 
 
@@ -276,47 +283,58 @@ class ExtStorages(Parent):
     OsmId: Optional[Dict] = None
 
 
+class Service(Parent):
+    execution: Optional[Execution] = None
+    force_turn_costs: Optional[bool] = None
+    maximum_distance: Optional[int] = None
+    maximum_distance_avoid_areas: Optional[int] = None
+    maximum_distance_alternative_routes: Optional[int] = None
+    maximum_distance_dynamic_weights: Optional[int] = None
+    maximum_distance_round_trip_routes: Optional[int] = None
+    maximum_snapping_radius: Optional[int] = None
+    maximum_speed_lower_bound: Optional[int] = None
+    maximum_visited_nodes: Optional[int] = None
+    maximum_waypoints: Optional[int] = None
+
+
 class ProfileEntry(Parent):
+    build: Optional[Build] = None
+    encoder_name: Optional[str] = None
+    ext_storages: Optional[ExtStorages] = None
+    service: Optional[Service] = None
     enabled: Optional[bool] = None
+
+
+class Build(Parent):
+    source_file: Optional[str] = None
     profile: Optional[str] = None
     graph_path: Optional[str] = None
     elevation: Optional[bool] = None
     encoder_options: Optional[EncoderOptions] = None
-    ext_storages: Optional[ExtStorages] = None
     elevation_smoothing: Optional[bool] = None
     encoder_flags_size: Optional[int] = None
     instructions: Optional[bool] = None
     optimize: Optional[bool] = None
     traffic: Optional[bool] = None
-    maximum_distance: Optional[int] = None
-    maximum_distance_dynamic_weights: Optional[int] = None
-    maximum_distance_avoid_areas: Optional[int] = None
-    maximum_waypoints: Optional[int] = None
-    maximum_snapping_radius: Optional[int] = None
-    maximum_distance_alternative_routes: Optional[int] = None
-    maximum_distance_round_trip_routes: Optional[int] = None
-    maximum_speed_lower_bound: Optional[int] = None
-    maximum_visited_nodes: Optional[int] = None
     location_index_resolution: Optional[int] = None
     location_index_search_iterations: Optional[int] = None
-    force_turn_costs: Optional[bool] = None
     interpolate_bridges_and_tunnels: Optional[bool] = None
     preparation: Optional[Preparation] = None
-    execution: Optional[Execution] = None
     gtfs_file: Optional[str] = None
 
 
 class Profiles(Parent):
-    car: Optional[ProfileEntry] = None
-    hgv: Optional[ProfileEntry] = None
-    bike_regular: Optional[ProfileEntry] = Field(None, alias='bike-regular')
-    bike_mountain: Optional[ProfileEntry] = Field(None, alias='bike-mountain')
-    bike_road: Optional[ProfileEntry] = Field(None, alias='bike-road')
-    bike_electric: Optional[ProfileEntry] = Field(None, alias='bike-electric')
-    walking: Optional[ProfileEntry] = None
-    hiking: Optional[ProfileEntry] = None
-    wheelchair: Optional[ProfileEntry] = None
-    public_transport: Optional[ProfileEntry] = Field(None, alias='public-transport')
+    model_config = ConfigDict(extra='allow')
+    # car: Optional[ProfileEntry] = None
+    # hgv: Optional[ProfileEntry] = None
+    # bike_regular: Optional[ProfileEntry] = Field(None, alias='bike-regular')
+    # bike_mountain: Optional[ProfileEntry] = Field(None, alias='bike-mountain')
+    # bike_road: Optional[ProfileEntry] = Field(None, alias='bike-road')
+    # bike_electric: Optional[ProfileEntry] = Field(None, alias='bike-electric')
+    # walking: Optional[ProfileEntry] = None
+    # hiking: Optional[ProfileEntry] = None
+    # wheelchair: Optional[ProfileEntry] = None
+    # public_transport: Optional[ProfileEntry] = Field(None, alias='public-transport')
 
 
 class Ors(Parent):
@@ -343,7 +361,6 @@ class Message(Parent):
 
 
 class Engine(Parent):
-    source_file: Optional[str] = None
     init_threads: Optional[int] = None
     preparation_mode: Optional[bool] = None
     graphs_root_path: Optional[str] = None
@@ -356,6 +373,5 @@ class Engine(Parent):
 class OrsConfigYML9(Parent):
     server: Optional[Server] = None
     spring: Optional[Spring] = None
-    springdoc: Optional[Springdoc] = None
     logging: Optional[Logging] = None
     ors: Optional[Ors] = None
