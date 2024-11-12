@@ -324,17 +324,16 @@ class Build(Parent):
 
 
 class Profiles(Parent):
-    model_config = ConfigDict(extra='allow')
-    # car: Optional[ProfileEntry] = None
-    # hgv: Optional[ProfileEntry] = None
-    # bike_regular: Optional[ProfileEntry] = Field(None, alias='bike-regular')
-    # bike_mountain: Optional[ProfileEntry] = Field(None, alias='bike-mountain')
-    # bike_road: Optional[ProfileEntry] = Field(None, alias='bike-road')
-    # bike_electric: Optional[ProfileEntry] = Field(None, alias='bike-electric')
-    # walking: Optional[ProfileEntry] = None
-    # hiking: Optional[ProfileEntry] = None
-    # wheelchair: Optional[ProfileEntry] = None
-    # public_transport: Optional[ProfileEntry] = Field(None, alias='public-transport')
+    driving_car: Optional[ProfileEntry] = Field(None, alias='driving-car')
+    driving_hgv: Optional[ProfileEntry] = Field(None, alias='driving-hgv')
+    cycling_regular: Optional[ProfileEntry] = Field(None, alias='cycling-regular')
+    cycling_mountain: Optional[ProfileEntry] = Field(None, alias='cycling-mountain')
+    cycling_road: Optional[ProfileEntry] = Field(None, alias='cycling-road')
+    cycling_electric: Optional[ProfileEntry] = Field(None, alias='cycling-electric')
+    foot_walking: Optional[ProfileEntry] = Field(None, alias='foot-walking')
+    foot_hiking: Optional[ProfileEntry] = Field(None, alias='foot-hiking')
+    wheelchair: Optional[ProfileEntry] = Field(None, alias='wheelchair')
+    public_transport: Optional[ProfileEntry] = Field(None, alias='public-transport')
 
 
 class Ors(Parent):
