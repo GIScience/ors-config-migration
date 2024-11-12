@@ -484,18 +484,6 @@ def migrate_8_to_9(old_yaml_config_path, new_yaml_config_path):
                 "gtfs_file",
             ]
 
-            profiles = [
-                "car",
-                "hgv",
-                "bike-regular",
-                "bike-mountain",
-                "bike-road",
-                "bike-electric",
-                "walking",
-                "hiking",
-                "wheelchair",
-                "public-transport"
-            ]
 
             for prop in properties_service:
                 if_exists_move_to(x, f'ors.{level_string}.profile_default.{prop}',
@@ -505,8 +493,13 @@ def migrate_8_to_9(old_yaml_config_path, new_yaml_config_path):
                 if_exists_move_to(x, f'ors.{level_string}.profile_default.{prop}',
                                   f'ors.{level_string}.profile_default.build.{prop}')
 
+            profiles = list(x["ors"][level_string]["profiles"].keys()).copy()
             for profile in profiles:
                 profile_new = x["ors"][level_string]["profiles"][profile]["profile"]
+                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.profile',
+                                  f'ors.{level_string}.profiles.{profile_new}.encoder_name')
+                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.enabled',
+                                  f'ors.{level_string}.profiles.{profile_new}.enabled')
                 for prop in properties_build:
                     if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.{prop}',
                                       f'ors.{level_string}.profiles.{profile_new}.build.{prop}')
@@ -514,10 +507,11 @@ def migrate_8_to_9(old_yaml_config_path, new_yaml_config_path):
                     if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.{prop}',
                                       f'ors.{level_string}.profiles.{profile_new}.service.{prop}')
 
+                remove_and_output(x, f'ors.{level_string}.profiles.{profile}', results)
+
             if_exists_move_to(x, f'ors.{level_string}.source_file',
                               f'ors.{level_string}.profile_default.build.source_file')
 
-            remove_and_output(x, f'ors.{level_string}.profiles.{profile}.profile', results)
             remove_and_output(x, f'ors.{level_string}.graphs_root_path', results)
 
 
