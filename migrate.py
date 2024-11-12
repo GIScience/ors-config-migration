@@ -8,8 +8,6 @@ from pydantic import ValidationError, ConfigDict
 
 from models.yml_config_8 import OrsConfigYML8
 from models.yml_config_9 import OrsConfigYML9
-from models.yml_config_ignore_extras_8 import OrsConfigYMLIgnoreExtras8
-# from models.yml_config_ignore_extras_9 import OrsConfigYMLIgnoreExtras9, Service
 
 BLACK = '\033[30m'
 RED = '\033[31m'
@@ -400,7 +398,8 @@ def migrate_7_to_8(json_config_path, yaml_config_path):
         new_config_schema = OrsConfigYML8.model_validate(x)
     except ValidationError as e:
         results['validation_errors'].append(f"Unknown config property found: {e}")
-        new_config_schema = OrsConfigYMLIgnoreExtras8.model_validate(x)
+        OrsConfigYML8.model_config = ConfigDict(extra='allow')
+        new_config_schema = OrsConfigYML8.model_validate(x)
     new_config = new_config_schema.model_dump(exclude_unset=True, by_alias=True)
 
     with open(yaml_config_path, 'w') as f:
