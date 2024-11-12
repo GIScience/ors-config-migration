@@ -520,7 +520,7 @@ def migrate_8_to_9(old_yaml_config_path, new_yaml_config_path):
                 "wheelchair",
                 "public-transport"
             ]
-            print(x["ors"]["engine"]["profiles"].keys())
+
             for profile in profiles:
                 profile_new = x["ors"][level_string]["profiles"][profile]["profile"]
                 if_exists_move_to(x, f'ors.{level_string}.source_file',
@@ -603,6 +603,27 @@ def migrate_8_to_9(old_yaml_config_path, new_yaml_config_path):
         with open(new_yaml_config_path, 'w') as f:
             f.writelines(yaml.dump(new_config))
             print(f'Wrote yml output to {f.name}')
+
+        print()
+        print()
+        info('--- Migration finished ---')
+        info('Filepaths have NOT been adjusted due to heavy rework in file locations. Please adjust '
+             'your paths (source files, graphs, elevation_cache, logs) according to your setup.'
+             ' Check the default paths in https://github.com/GIScience/openrouteservice/blob/main/ors-config.yml.'
+             ' For further help see https://giscience.github.io/openrouteservice/run-instance/')
+        info('You may have to act on the warnings below if the settings are relevant to your setup.')
+        info('For questions please use https://ask.openrouteservice.org to get our attention.')
+        if len(results['warnings']) > 0:
+            info(f'--- {len(results["warnings"])} warnings encountered ---')
+            for w in results["warnings"]:
+                warning(w)
+        print()
+        if len(results["validation_errors"]) > 0:
+            info('--- Validation Errors encountered ---')
+            info('The following properties could not be migrated and are removed in the converted config file.')
+            info('Please check if those were valid configurations in the first place:')
+            for e in results["validation_errors"]:
+                error(e)
 
 if __name__ == "__main__":
     args = sys.argv[1:]
