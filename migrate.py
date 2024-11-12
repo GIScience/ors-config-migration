@@ -452,61 +452,37 @@ def migrate_8_to_9(old_yaml_config_path, new_yaml_config_path):
         level_string = "engine"
         if level_string in x['ors']:
             print(f"\n--- Migrating ors.{level_string} ---")
-            remove_and_output(x, f'ors.{level_string}.graphs_root_path', results)
 
-            if_exists_move_to(x, f'ors.{level_string}.profile_default.execution',
-                              f'ors.{level_string}.profile_default.service.execution')
-            if_exists_move_to(x, f'ors.{level_string}.profile_default.force_turn_costs',
-                              f'ors.{level_string}.profile_default.service.force_turn_costs')
-            if_exists_move_to(x, f'ors.{level_string}.profile_default.maximum_distance',
-                              f'ors.{level_string}.profile_default.service.maximum_distance')
-            if_exists_move_to(x, f'ors.{level_string}.profile_default.maximum_distance_alternative_routes',
-                              f'ors.{level_string}.profile_default.service.maximum_distance_alternative_routes')
-            if_exists_move_to(x, f'ors.{level_string}.profile_default.maximum_distance_avoid_areas',
-                              f'ors.{level_string}.profile_default.service.maximum_distance_avoid_areas')
-            if_exists_move_to(x, f'ors.{level_string}.profile_default.maximum_distance_dynamic_weights',
-                              f'ors.{level_string}.profile_default.service.maximum_distance_dynamic_weights')
-            if_exists_move_to(x, f'ors.{level_string}.profile_default.maximum_distance_round_trip_routes',
-                              f'ors.{level_string}.profile_default.service.maximum_distance_round_trip_routes')
-            if_exists_move_to(x, f'ors.{level_string}.profile_default.maximum_snapping_radius',
-                              f'ors.{level_string}.profile_default.service.maximum_snapping_radius')
-            if_exists_move_to(x, f'ors.{level_string}.profile_default.maximum_speed_lower_bound',
-                              f'ors.{level_string}.profile_default.service.maximum_speed_lower_bound')
-            if_exists_move_to(x, f'ors.{level_string}.profile_default.maximum_visited_nodes',
-                              f'ors.{level_string}.profile_default.service.maximum_visited_nodes')
-            if_exists_move_to(x, f'ors.{level_string}.profile_default.maximum_waypoints',
-                              f'ors.{level_string}.profile_default.service.maximum_waypoints')
+            properties_service = [
+                "execution",
+                "force_turn_costs",
+                "maximum_distance",
+                "maximum_distance_alternative_routes",
+                "maximum_distance_avoid_areas",
+                "maximum_distance_dynamic_weights",
+                "maximum_distance_round_trip_routes",
+                "maximum_snapping_radius",
+                "maximum_speed_lower_bound",
+                "maximum_visited_nodes",
+                "maximum_waypoints",
+            ]
 
-            if_exists_move_to(x, f'ors.{level_string}.source_file',
-                              f'ors.{level_string}.profile_default.build.source_file')
-            if_exists_move_to(x, f'ors.{level_string}.profile_default.elevation',
-                              f'ors.{level_string}.profile_default.build.elevation')
-            if_exists_move_to(x, f'ors.{level_string}.profile_default.profile',
-                              f'ors.{level_string}.profile_default.build.profile')
-            if_exists_move_to(x, f'ors.{level_string}.profile_default.graph_path',
-                              f'ors.{level_string}.profile_default.build.graph_path')
-            if_exists_move_to(x, f'ors.{level_string}.profile_default.encoder_options',
-                              f'ors.{level_string}.profile_default.build.encoder_options')
-            if_exists_move_to(x, f'ors.{level_string}.profile_default.elevation_smoothing',
-                              f'ors.{level_string}.profile_default.build.elevation_smoothing')
-            if_exists_move_to(x, f'ors.{level_string}.profile_default.encoder_flags_size',
-                              f'ors.{level_string}.profile_default.build.encoder_flags_size')
-            if_exists_move_to(x, f'ors.{level_string}.profile_default.instructions',
-                              f'ors.{level_string}.profile_default.build.instructions')
-            if_exists_move_to(x, f'ors.{level_string}.profile_default.optimize',
-                              f'ors.{level_string}.profile_default.build.optimize')
-            if_exists_move_to(x, f'ors.{level_string}.profile_default.traffic',
-                              f'ors.{level_string}.profile_default.build.traffic')
-            if_exists_move_to(x, f'ors.{level_string}.profile_default.location_index_resolution',
-                              f'ors.{level_string}.profile_default.build.location_index_resolution')
-            if_exists_move_to(x, f'ors.{level_string}.profile_default.location_index_search_iterations',
-                              f'ors.{level_string}.profile_default.build.location_index_search_iterations')
-            if_exists_move_to(x, f'ors.{level_string}.profile_default.interpolate_bridges_and_tunnels',
-                              f'ors.{level_string}.profile_default.build.interpolate_bridges_and_tunnels')
-            if_exists_move_to(x, f'ors.{level_string}.profile_default.preparation',
-                              f'ors.{level_string}.profile_default.build.preparation')
-            if_exists_move_to(x, f'ors.{level_string}.profile_default.gtfs_file',
-                              f'ors.{level_string}.profile_default.build.gtfs_file')
+            properties_build = [
+                "source_file",
+                "elevation",
+                "graph_path",
+                "encoder_options",
+                "elevation_smoothing",
+                "encoder_flags_size",
+                "instructions",
+                "optimize",
+                "traffic",
+                "location_index_resolution",
+                "location_index_search_iterations",
+                "interpolate_bridges_and_tunnels",
+                "preparation",
+                "gtfs_file",
+            ]
 
             profiles = [
                 "car",
@@ -521,61 +497,28 @@ def migrate_8_to_9(old_yaml_config_path, new_yaml_config_path):
                 "public-transport"
             ]
 
+            for prop in properties_service:
+                if_exists_move_to(x, f'ors.{level_string}.profile_default.{prop}',
+                                f'ors.{level_string}.profile_default.service.{prop}')
+
+            for prop in properties_build:
+                if_exists_move_to(x, f'ors.{level_string}.profile_default.{prop}',
+                                  f'ors.{level_string}.profile_default.build.{prop}')
+
             for profile in profiles:
                 profile_new = x["ors"][level_string]["profiles"][profile]["profile"]
-                if_exists_move_to(x, f'ors.{level_string}.source_file',
-                                  f'ors.{level_string}.profiles.{profile}.build.source_file')
-                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.elevation',
-                                  f'ors.{level_string}.profiles.{profile_new}.build.elevation')
-                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.graph_path',
-                                  f'ors.{level_string}.profiles.{profile_new}.build.graph_path')
-                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.encoder_options',
-                                  f'ors.{level_string}.profiles.{profile_new}.build.encoder_options')
-                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.elevation_smoothing',
-                                  f'ors.{level_string}.profiles.{profile_new}.build.elevation_smoothing')
-                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.encoder_flags_size',
-                                  f'ors.{level_string}.profiles.{profile_new}.build.encoder_flags_size')
-                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.instructions',
-                                  f'ors.{level_string}.profiles.{profile_new}.build.instructions')
-                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.optimize',
-                                  f'ors.{level_string}.profiles.{profile_new}.build.optimize')
-                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.traffic',
-                                  f'ors.{level_string}.profiles.{profile_new}.build.traffic')
-                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.location_index_resolution',
-                                  f'ors.{level_string}.profiles.{profile_new}.build.location_index_resolution')
-                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.location_index_search_iterations',
-                                  f'ors.{level_string}.profiles.{profile_new}.build.location_index_search_iterations')
-                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.interpolate_bridges_and_tunnels',
-                                  f'ors.{level_string}.profiles.{profile_new}.build.interpolate_bridges_and_tunnels')
-                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.preparation',
-                                  f'ors.{level_string}.profiles.{profile_new}.build.preparation')
-                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.gtfs_file',
-                                  f'ors.{level_string}.profiles.{profile_new}.build.gtfs_file')
+                for prop in properties_build:
+                    if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.{prop}',
+                                      f'ors.{level_string}.profiles.{profile_new}.build.{prop}')
+                for prop in properties_service:
+                    if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.{prop}',
+                                      f'ors.{level_string}.profiles.{profile_new}.service.{prop}')
 
-                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.execution',
-                                  f'ors.{level_string}.profiles.{profile}.service.execution')
-                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.force_turn_costs',
-                                  f'ors.{level_string}.profiles.{profile}.service.force_turn_costs')
-                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.maximum_distance',
-                                  f'ors.{level_string}.profiles.{profile}.service.maximum_distance')
-                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.maximum_distance_alternative_routes',
-                                  f'ors.{level_string}.profiles.{profile}.service.maximum_distance_alternative_routes')
-                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.maximum_distance_avoid_areas',
-                                  f'ors.{level_string}.profiles.{profile}.service.maximum_distance_avoid_areas')
-                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.maximum_distance_dynamic_weights',
-                                  f'ors.{level_string}.profiles.{profile}.service.maximum_distance_dynamic_weights')
-                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.maximum_distance_round_trip_routes',
-                                  f'ors.{level_string}.profiles.{profile}.service.maximum_distance_round_trip_routes')
-                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.maximum_snapping_radius',
-                                  f'ors.{level_string}.profiles.{profile}.service.maximum_snapping_radius')
-                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.maximum_speed_lower_bound',
-                                  f'ors.{level_string}.profiles.{profile}.service.maximum_speed_lower_bound')
-                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.maximum_visited_nodes',
-                                  f'ors.{level_string}.profiles.{profile}.service.maximum_visited_nodes')
-                if_exists_move_to(x, f'',
-                                  f'ors.{level_string}.profiles.{profile}.service.maximum_waypoints')
+            if_exists_move_to(x, f'ors.{level_string}.source_file',
+                              f'ors.{level_string}.profile_default.build.source_file')
 
-                remove_and_output(x, f'ors.{level_string}.profiles.{profile}.profile', results)
+            remove_and_output(x, f'ors.{level_string}.profiles.{profile}.profile', results)
+            remove_and_output(x, f'ors.{level_string}.graphs_root_path', results)
 
 
         level_string = "springdoc"
@@ -599,6 +542,8 @@ def migrate_8_to_9(old_yaml_config_path, new_yaml_config_path):
             OrsConfigYML9.model_config = ConfigDict(extra='allow')
             new_config_schema = OrsConfigYML9.model_validate(x)
         new_config = new_config_schema.model_dump(exclude_unset=True, by_alias=True)
+
+        print()
 
         with open(new_yaml_config_path, 'w') as f:
             f.writelines(yaml.dump(new_config))
