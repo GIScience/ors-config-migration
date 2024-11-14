@@ -496,7 +496,6 @@ def migrate_8_to_9(old_yaml_config_path, new_yaml_config_path):
 
             profiles = list(x["ors"][level_string]["profiles"].keys()).copy()
             for profile in profiles:
-                profile_new = x["ors"][level_string]["profiles"][profile]["profile"]
                 if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.profile',
                                   f'ors.{level_string}.profiles.{profile_new}.encoder_name')
                 if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.enabled',
@@ -566,14 +565,14 @@ def migrate_8_to_9(old_yaml_config_path, new_yaml_config_path):
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    from_version = int(args[1])
-    to_version = int(args[2])
-    out_file = join(Path.cwd(), 'ors-config.yml')
-
     if not 0 < len(args) < 5:
-        print("Usage: python migrate.py ./your-ors-config.json [./ors-config.yml]")
+        print("Usage: python migrate.py from_version to_version ./your-ors-config.json [./ors-config.yml]")
         exit(1)
-    elif len(args) == 4:
+
+    from_version = int(args[0])
+    to_version = int(args[1])
+    out_file = join(Path.cwd(), 'ors-config.yml')
+    if len(args) == 4:
         out_file = args[3]
     elif len(args) == 3:
         if Path(out_file).exists():
@@ -581,7 +580,7 @@ if __name__ == "__main__":
             info("Aborting. Please move the file or provide an output file name as second argument to overwrite "
                  "existing files.")
             exit(3)
-    in_file = args[0]
+    in_file = args[2]
     # Check if in_file and out_file are absolute paths if not join with current working directory
     if not Path(in_file).is_absolute():
         in_file = join(Path.cwd(), in_file)
