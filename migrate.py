@@ -496,16 +496,19 @@ def migrate_8_to_9(old_yaml_config_path, new_yaml_config_path):
 
             profiles = list(x["ors"][level_string]["profiles"].keys()).copy()
             for profile in profiles:
-                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.profile',
-                                  f'ors.{level_string}.profiles.{profile_new}.encoder_name')
-                if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.enabled',
-                                  f'ors.{level_string}.profiles.{profile_new}.enabled')
-                for prop in properties_build:
-                    if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.{prop}',
-                                      f'ors.{level_string}.profiles.{profile_new}.build.{prop}')
-                for prop in properties_service:
-                    if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.{prop}',
-                                      f'ors.{level_string}.profiles.{profile_new}.service.{prop}')
+                pro = x["ors"][level_string]["profiles"][profile]
+                if "profile" in pro.keys():
+                    profile_new = pro["profile"]
+                    if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.profile',
+                                      f'ors.{level_string}.profiles.{profile_new}.encoder_name')
+                    if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.enabled',
+                                      f'ors.{level_string}.profiles.{profile_new}.enabled')
+                    for prop in properties_build:
+                        if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.{prop}',
+                                          f'ors.{level_string}.profiles.{profile_new}.build.{prop}')
+                    for prop in properties_service:
+                        if_exists_move_to(x, f'ors.{level_string}.profiles.{profile}.{prop}',
+                                          f'ors.{level_string}.profiles.{profile_new}.service.{prop}')
 
                 remove_and_output(x, f'ors.{level_string}.profiles.{profile}', results)
 
