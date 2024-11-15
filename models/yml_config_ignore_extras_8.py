@@ -9,55 +9,51 @@ from typing import List, Optional, Dict, Union
 from pydantic import BaseModel, Field, ConfigDict
 
 
-class Parent(BaseModel):
-    model_config = ConfigDict(extra='forbid')
-
-
-class Whitelabel(Parent):
+class Whitelabel(BaseModel):
     enabled: Optional[bool] = None
 
 
-class Error(Parent):
+class Error(BaseModel):
     whitelabel: Optional[Whitelabel] = None
 
 
-class ServerServlet(Parent):
+class ServerServlet(BaseModel):
     context_path: Optional[str] = Field(None, alias='context-path')
 
 
-class Server(Parent):
+class Server(BaseModel):
     port: Optional[int] = None
     error: Optional[Error] = None
     servlet: Optional[ServerServlet] = None
 
 
-class SpringProfiles(Parent):
+class SpringProfiles(BaseModel):
     active: Optional[str] = None
 
 
-class MVCServlet(Parent):
+class MVCServlet(BaseModel):
     path: Optional[str] = None
 
 
-class Mvc(Parent):
+class Mvc(BaseModel):
     servlet: Optional[MVCServlet] = None
 
 
-class Main(Parent):
+class Main(BaseModel):
     banner_mode: Optional[str] = Field(None, alias='banner-mode')
 
 
-class Spring(Parent):
+class Spring(BaseModel):
     profiles: Optional[SpringProfiles] = None
     mvc: Optional[Mvc] = None
     main: Optional[Main] = None
 
 
-class SyntaxHighlight(Parent):
+class SyntaxHighlight(BaseModel):
     activated: Optional[bool] = None
 
 
-class SwaggerUi(Parent):
+class SwaggerUi(BaseModel):
     enabled: Optional[bool] = None
     path: Optional[str] = None
     tryItOutEnabled: Optional[bool] = None
@@ -66,49 +62,49 @@ class SwaggerUi(Parent):
     showExtensions: Optional[bool] = None
 
 
-class ApiDocs(Parent):
+class ApiDocs(BaseModel):
     path: Optional[str] = None
     version: Optional[str] = None
 
 
-class Springdoc(Parent):
+class Springdoc(BaseModel):
     swagger_ui: Optional[SwaggerUi] = Field(None, alias='swagger-ui')
     api_docs: Optional[ApiDocs] = Field(None, alias='api-docs')
     packages_to_scan: Optional[str] = Field(None, alias='packages-to-scan')
     pathsToMatch: Optional[str] = None
 
 
-class File(Parent):
+class File(BaseModel):
     name: Optional[str] = None
 
 
-class Pattern(Parent):
+class Pattern(BaseModel):
     console: Optional[str] = None
     file: Optional[str] = None
 
 
-class Org(Parent):
+class Org(BaseModel):
     heigit: Optional[str] = None
 
 
-class Level(Parent):
+class Level(BaseModel):
     root: Optional[str] = None
     org: Optional[Org] = None
 
 
-class Logging(Parent):
+class Logging(BaseModel):
     file: Optional[File] = None
     pattern: Optional[Pattern] = None
     level: Optional[Level] = None
 
 
-class Cors(Parent):
+class Cors(BaseModel):
     allowed_origins: Optional[str] = None
     allowed_headers: Optional[str] = None
     preflight_max_age: Optional[int] = None
 
 
-class Routing(Parent):
+class Routing(BaseModel):
     enabled: Optional[bool] = None
     attribution: Optional[str] = None
     gpx_name: Optional[str] = None
@@ -122,7 +118,7 @@ class Routing(Parent):
     maximum_alternative_routes: Optional[int] = None
 
 
-class Matrix(Parent):
+class Matrix(BaseModel):
     enabled: Optional[bool] = None
     attribution: Optional[str] = None
     maximum_routes: Optional[int] = None
@@ -132,7 +128,7 @@ class Matrix(Parent):
     u_turn_costs: Optional[int] = None
 
 
-class MaximumRangeDistanceItem(Parent):
+class MaximumRangeDistanceItem(BaseModel):
     profiles: Optional[str] = None
     value: Optional[int] = None
 
@@ -141,14 +137,14 @@ class MaximumRangeTimeItem(MaximumRangeDistanceItem):
     pass
 
 
-class Fastisochrones(Parent):
+class Fastisochrones(BaseModel):
     maximum_range_distance_default: Optional[int] = None
     maximum_range_distance: Optional[List[MaximumRangeDistanceItem]] = None
     maximum_range_time_default: Optional[int] = None
     maximum_range_time: Optional[List[MaximumRangeTimeItem]] = None
 
 
-class ProviderParameters(Parent):
+class ProviderParameters(BaseModel):
     host: Optional[str] = None
     port: Optional[int] = None
     user: Optional[str] = None
@@ -159,7 +155,7 @@ class ProviderParameters(Parent):
     postgis_version: Optional[str] = None
 
 
-class StatisticsProvider(Parent):
+class StatisticsProvider(BaseModel):
     enabled: Optional[bool] = None
     attribution: Optional[str] = None
     provider_name: Optional[str] = None
@@ -167,7 +163,7 @@ class StatisticsProvider(Parent):
     provider_parameters: Optional[ProviderParameters] = None
 
 
-class Isochrones(Parent):
+class Isochrones(BaseModel):
     enabled: Optional[bool] = None
     attribution: Optional[str] = None
     maximum_locations: Optional[int] = None
@@ -181,12 +177,12 @@ class Isochrones(Parent):
     statistics_providers: Optional[Dict[str, StatisticsProvider]] = None
 
 
-class Snap(Parent):
+class Snap(BaseModel):
     enabled: Optional[bool] = None
     attribution: Optional[str] = None
 
 
-class Endpoints(Parent):
+class Endpoints(BaseModel):
     routing: Optional[Routing] = None
     matrix: Optional[Matrix] = None
     isochrones: Optional[Isochrones] = None
@@ -194,7 +190,7 @@ class Endpoints(Parent):
     # ors.endpoints.Snap Input should be None
 
 
-class Elevation(Parent):
+class Elevation(BaseModel):
     preprocessed: Optional[bool] = None
     data_access: Optional[str] = None
     cache_clear: Optional[bool] = None
@@ -202,20 +198,20 @@ class Elevation(Parent):
     cache_path: Optional[str] = None
 
 
-class ExecEntry(Parent):
+class ExecEntry(BaseModel):
     active_landmarks: Optional[int] = None
 
 
-class ExecMethods(Parent):
+class ExecMethods(BaseModel):
     lm: Optional[ExecEntry] = None
     core: Optional[ExecEntry] = None
 
 
-class Execution(Parent):
+class Execution(BaseModel):
     methods: Optional[ExecMethods] = None
 
 
-class EncoderOptions(Parent):
+class EncoderOptions(BaseModel):
     turn_costs: Optional[bool] = None
     block_fords: Optional[bool] = None
     use_acceleration: Optional[bool] = None
@@ -224,7 +220,7 @@ class EncoderOptions(Parent):
     conditional_speed: Optional[bool] = None
     consider_elevation: Optional[bool] = None
 
-class PrepCH(Parent):
+class PrepCH(BaseModel):
     enabled: Optional[bool] = None
     threads: Optional[int] = None
     weightings: Optional[str] = None
@@ -242,23 +238,23 @@ class PrepFastIso(PrepCH):
     maxcellnodes: Optional[int] = None
 
 
-class PrepMethods(Parent):
+class PrepMethods(BaseModel):
     lm: Optional[PrepLM] = None
     ch: Optional[PrepCH] = None
     core: Optional[PrepCORE] = None
     fastisochrones: Optional[PrepFastIso] = None
 
 
-class Preparation(Parent):
+class Preparation(BaseModel):
     min_network_size: Optional[int] = None
     methods: Optional[PrepMethods] = None
 
 
-class RoadAccessRestrictions(Parent):
+class RoadAccessRestrictions(BaseModel):
     use_for_warnings: Optional[bool] = None
 
 
-class ExtStorages(Parent):
+class ExtStorages(BaseModel):
     WayCategory: Optional[Dict] = None
     HeavyVehicle: Optional[Union[HeavyVehicle, Dict]] = None
     WaySurfaceType: Optional[Dict] = None
@@ -276,7 +272,7 @@ class ExtStorages(Parent):
     OsmId: Optional[Dict] = None
 
 
-class ProfileEntry(Parent):
+class ProfileEntry(BaseModel):
     enabled: Optional[bool] = None
     profile: Optional[str] = None
     graph_path: Optional[str] = None
@@ -306,7 +302,7 @@ class ProfileEntry(Parent):
     gtfs_file: Optional[str] = None
 
 
-class Profiles(Parent):
+class Profiles(BaseModel):
     car: Optional[ProfileEntry] = None
     hgv: Optional[ProfileEntry] = None
     bike_regular: Optional[ProfileEntry] = Field(None, alias='bike-regular')
@@ -319,14 +315,14 @@ class Profiles(Parent):
     public_transport: Optional[ProfileEntry] = Field(None, alias='public-transport')
 
 
-class Ors(Parent):
+class Ors(BaseModel):
     cors: Optional[Cors] = None
     messages: Optional[List[Message]] = None
     endpoints: Optional[Endpoints] = None
     engine: Optional[Engine] = None
 
 
-class ConditionItem(Parent):
+class ConditionItem(BaseModel):
     request_service: Optional[str] = None
     request_profile: Optional[str] = None
     request_preference: Optional[str] = None
@@ -336,13 +332,13 @@ class ConditionItem(Parent):
     time_before: Optional[str] = None
 
 
-class Message(Parent):
+class Message(BaseModel):
     active: Optional[bool] = None
     text: Optional[str] = None
     condition: Optional[List[ConditionItem]] = None
 
 
-class Engine(Parent):
+class Engine(BaseModel):
     source_file: Optional[str] = None
     init_threads: Optional[int] = None
     preparation_mode: Optional[bool] = None
@@ -353,7 +349,7 @@ class Engine(Parent):
     profiles: Optional[Profiles] = None
 
 
-class OrsConfigYML(Parent):
+class OrsConfigYMLIgnoreExtras8(BaseModel):
     server: Optional[Server] = None
     spring: Optional[Spring] = None
     springdoc: Optional[Springdoc] = None
