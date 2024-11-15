@@ -414,19 +414,7 @@ def migrate_7_to_8(json_config_path, yaml_config_path):
          'your paths (source files, graphs, elevation_cache, logs) according to your setup.'
          ' Check the default paths in https://github.com/GIScience/openrouteservice/blob/main/ors-config.yml.'
          ' For further help see https://giscience.github.io/openrouteservice/run-instance/')
-    info('You may have to act on the warnings below if the settings are relevant to your setup.')
-    info('For questions please use https://ask.openrouteservice.org to get our attention.')
-    if len(results['warnings']) > 0:
-        info(f'--- {len(results["warnings"])} warnings encountered ---')
-        for w in results["warnings"]:
-            warning(w)
-    print()
-    if len(results["validation_errors"]) > 0:
-        info('--- Validation Errors encountered ---')
-        info('The following properties could not be migrated and are removed in the converted config file.')
-        info('Please check if those were valid configurations in the first place:')
-        for e in results["validation_errors"]:
-            error(e)
+    print_warnings_and_errors(results)
 
 
 def migrate_8_to_9(old_yaml_config_path, new_yaml_config_path):
@@ -543,6 +531,10 @@ def migrate_8_to_9(old_yaml_config_path, new_yaml_config_path):
     print()
     print()
     info('--- Migration finished ---')
+    print_warnings_and_errors(results)
+
+
+def print_warnings_and_errors(results):
     info('You may have to act on the warnings below if the settings are relevant to your setup.')
     info('For questions please use https://ask.openrouteservice.org to get our attention.')
     if len(results['warnings']) > 0:
