@@ -560,23 +560,36 @@ def migrate_8_to_9(old_yaml_config_path, new_yaml_config_path):
 
 if __name__ == "__main__":
     args = sys.argv[1:]
+
+    if not 0 < len(args) < 5:
+        print(
+            "Usage: python migrate.py <ors-source-major-version> <ors-target-major-version> ./your-ors-config.(json/yaml) ["
+            "./ors-config.yml]")
+        exit(1)
+
+    from_version = int(args[0])
+    to_version = int(args[1])
     out_file = join(Path.cwd(), 'ors-config.yml')
 
-    if not 0 < len(args) < 3:
-        print("Usage: python migrate.py ./your-ors-config.json [./ors-config.yml]")
-        exit(1)
-    elif len(args) == 2:
-        out_file = args[1]
-    elif len(args) == 1:
+    if len(args) == 4:
+        out_file = args[3]
+    elif len(args) == 3:
         if Path(out_file).exists():
             error(f"The default output file {out_file} already exists.")
             info("Aborting. Please move the file or provide an output file name as second argument to overwrite "
                  "existing files.")
             exit(1)
-    in_file = args[0]
+    in_file = args[2]
+
     # Check if in_file and out_file are absolute paths if not join with current working directory
     if not Path(in_file).is_absolute():
         in_file = join(Path.cwd(), in_file)
     if not Path(out_file).is_absolute():
         out_file = join(Path.cwd(), out_file)
-    migrate_7_to_8(in_file, out_file)
+
+    if from_version == 7 and to_version == 8:
+        migrate_7_to_8(in_file, out_file)
+    elif from_version == 8 and to_version == 9:
+        migrate_8_to_9(in_file, out_file)
+    else:
+        print("Invalid ors version numbers in input. Please pass either 7 & 8 or 8 & 9.")
