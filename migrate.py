@@ -404,7 +404,8 @@ def migrate_7_to_8(json_config_path, yaml_config_path):
     new_config = new_config_schema.model_dump(exclude_unset=True, by_alias=True)
 
     with open(yaml_config_path, 'w') as f:
-        f.writelines(yaml.dump(new_config))
+        dump = yaml.dump(new_config).replace("{}", "")
+        f.writelines(dump)
         print(f'Wrote yml output to {f.name}')
 
     print()
@@ -525,7 +526,8 @@ def migrate_8_to_9(old_yaml_config_path, new_yaml_config_path):
     print()
 
     with open(new_yaml_config_path, 'w') as f:
-        f.writelines(yaml.dump(new_config))
+        dump = yaml.dump(new_config).replace("{}", "")
+        f.writelines(dump)
         print(f'Wrote yml output to {f.name}')
 
     print()
