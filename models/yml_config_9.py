@@ -214,9 +214,15 @@ class ExecEntry(Parent):
     active_landmarks: Optional[int] = None
 
 
+class ExecAstarEntry(Parent):
+    approximation: Optional[str] = None
+    epsilon: Optional[float] = None
+
+
 class ExecMethods(Parent):
     lm: Optional[ExecEntry] = None
     core: Optional[ExecEntry] = None
+    astar: Optional[ExecAstarEntry] = None
 
 
 class Execution(Parent):
@@ -231,6 +237,7 @@ class EncoderOptions(Parent):
     conditional_access: Optional[bool] = None
     conditional_speed: Optional[bool] = None
     consider_elevation: Optional[bool] = None
+
 
 class PrepCH(Parent):
     enabled: Optional[bool] = None

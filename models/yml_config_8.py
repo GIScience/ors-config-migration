@@ -206,9 +206,15 @@ class ExecEntry(Parent):
     active_landmarks: Optional[int] = None
 
 
+class ExecAstarEntry(Parent):
+    approximation: Optional[str] = None
+    epsilon: Optional[float] = None
+
+
 class ExecMethods(Parent):
     lm: Optional[ExecEntry] = None
     core: Optional[ExecEntry] = None
+    astar: Optional[ExecAstarEntry] = None
 
 
 class Execution(Parent):

@@ -202,9 +202,15 @@ class ExecEntry(BaseModel):
     active_landmarks: Optional[int] = None
 
 
+class ExecAstarEntry(BaseModel):
+    approximation: Optional[str] = None
+    epsilon: Optional[float] = None
+
+
 class ExecMethods(BaseModel):
     lm: Optional[ExecEntry] = None
     core: Optional[ExecEntry] = None
+    astar: Optional[ExecAstarEntry] = None
 
 
 class Execution(BaseModel):
