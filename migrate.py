@@ -119,7 +119,7 @@ def migrate_logging(x, jsonpath, yamlpath, results):
         info(f"{jsonpath}.level_file migrated to {yamlpath}.level.root & {yamlpath}.level.org.heigit")
         warning_text = f"This was a best effort conversion to the new logging configuration. The logging was heavily " \
                        f"reworked. Best check how to set up Logging now: " \
-                       f"https://giscience.github.io/openrouteservice/run-instance/configuration/spring/logging"
+                       f"https://giscience.github.io/openrouteservice/run-instance/configuration/logging"
         warning(warning_text)
         results['warnings'].append(warning_text)
     except KeyError as e:
