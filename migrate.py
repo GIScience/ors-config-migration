@@ -161,13 +161,11 @@ def migrate_profiles(x, jsonpath, yamlpath, results):
     profiles = get_recursive(x, jsonpath, True)
     if 'default_params' in profiles:
         info(f'Migrating "{jsonpath}.default_params":')
-        if_exists_move_to(x, 'ors.services.routing.default_params.maximum_segment_distance_with_dynamic_weights',
-                          'ors.engine.profile_default.maximum_distance_dynamic_weights')
         if 'maximum_segment_distance_with_dynamic_weights' in profiles['default_params']:
             del profiles['default_params']['maximum_segment_distance_with_dynamic_weights']
-        if_exists_move_to(x, 'ors.services.routing.default_params.graphs_root_path', 'ors.engine.graphs_root_path')
         if 'graphs_root_path' in profiles['default_params']:
-            del profiles['default_params']['graphs_root_path']
+            graphs_root_path = get_recursive(profiles['default_params'], 'graphs_root_path', True)
+            set_recursive(x, 'ors.engine.graphs_root_path', graphs_root_path)
         profile_defaults = get_recursive(profiles, 'default_params', True)
         profile_defaults = migrate_profile('default_params', profile_defaults, results, True)
 
