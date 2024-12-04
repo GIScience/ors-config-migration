@@ -6,8 +6,10 @@ from pathlib import Path
 import yaml
 from pydantic import ValidationError
 
-from models.yml_config import OrsConfigYML
-from models.yml_config_ignore_extras import OrsConfigYMLIgnoreExtras
+from models.yml_config_8 import OrsConfigYML8
+from models.yml_config_9 import OrsConfigYML9
+from models.yml_config_ignore_extras_8 import OrsConfigYMLIgnoreExtras8
+from models.yml_config_ignore_extras_9 import OrsConfigYMLIgnoreExtras9
 
 BLACK = '\033[30m'
 RED = '\033[31m'
@@ -117,7 +119,7 @@ def migrate_logging(x, jsonpath, yamlpath, results):
         info(f"{jsonpath}.level_file migrated to {yamlpath}.level.root & {yamlpath}.level.org.heigit")
         warning_text = f"This was a best effort conversion to the new logging configuration. The logging was heavily " \
                        f"reworked. Best check how to set up Logging now: " \
-                       f"https://giscience.github.io/openrouteservice/run-instance/configuration/spring/logging"
+                       f"https://giscience.github.io/openrouteservice/run-instance/configuration/logging"
         warning(warning_text)
         results['warnings'].append(warning_text)
     except KeyError as e:
@@ -159,13 +161,11 @@ def migrate_profiles(x, jsonpath, yamlpath, results):
     profiles = get_recursive(x, jsonpath, True)
     if 'default_params' in profiles:
         info(f'Migrating "{jsonpath}.default_params":')
-        if_exists_move_to(x, 'ors.services.routing.default_params.maximum_segment_distance_with_dynamic_weights',
-                          'ors.engine.profile_default.maximum_distance_dynamic_weights')
         if 'maximum_segment_distance_with_dynamic_weights' in profiles['default_params']:
             del profiles['default_params']['maximum_segment_distance_with_dynamic_weights']
-        if_exists_move_to(x, 'ors.services.routing.default_params.graphs_root_path', 'ors.engine.graphs_root_path')
         if 'graphs_root_path' in profiles['default_params']:
-            del profiles['default_params']['graphs_root_path']
+            graphs_root_path = get_recursive(profiles['default_params'], 'graphs_root_path', True)
+            set_recursive(x, 'ors.engine.graphs_root_path', graphs_root_path)
         profile_defaults = get_recursive(profiles, 'default_params', True)
         profile_defaults = migrate_profile('default_params', profile_defaults, results, True)
 
@@ -305,9 +305,9 @@ def migrate_messages(x, jsonpath, yamlpath):
             info(f"No property for '{jsonpath}' to migrate.")
 
 
-def migrate(json_config_path, yaml_config_path):
+def migrate_7_to_8(json_config_path, yaml_config_path):
     """
-    Program to migrate an existing ors-config.json to the new ors-config.yml format.
+    Program to migrate an existing ors-config.json from version 7 to the ors-config.yml format of version 8.
     Includes validation of config input and reports on invalid or non-transferable entries.
     For further information and configuration of ORS via environment variables
     see https://giscience.github.io/openrouteservice/run-instance/configuration
@@ -395,14 +395,15 @@ def migrate(json_config_path, yaml_config_path):
     print()
 
     try:
-        new_config_schema = OrsConfigYML.model_validate(x)
+        new_config_schema = OrsConfigYML8.model_validate(x)
     except ValidationError as e:
         results['validation_errors'].append(f"Unknown config property found: {e}")
-        new_config_schema = OrsConfigYMLIgnoreExtras.model_validate(x)
+        new_config_schema = OrsConfigYMLIgnoreExtras8.model_validate(x)
     new_config = new_config_schema.model_dump(exclude_unset=True, by_alias=True)
 
     with open(yaml_config_path, 'w') as f:
-        f.writelines(yaml.dump(new_config))
+        dump = yaml.dump(new_config).replace("{}", "")
+        f.writelines(dump)
         print(f'Wrote yml output to {f.name}')
 
     print()
@@ -412,6 +413,128 @@ def migrate(json_config_path, yaml_config_path):
          'your paths (source files, graphs, elevation_cache, logs) according to your setup.'
          ' Check the default paths in https://github.com/GIScience/openrouteservice/blob/main/ors-config.yml.'
          ' For further help see https://giscience.github.io/openrouteservice/run-instance/')
+    print_warnings_and_errors(results)
+
+
+def migrate_8_to_9(old_yaml_config_path, new_yaml_config_path):
+    """
+    Program to migrate an existing ors-config.yml from version 8 to the ors-config.yml format of version 9.
+    Includes validation of config input and reports on invalid or non-transferable entries.
+    For further information and configuration of ORS via environment variables
+    see https://giscience.github.io/openrouteservice/run-instance/configuration
+    """
+    results = {
+        "warnings": [],
+        "validation_errors": []
+    }
+    with open(join(dirname(__file__), str(old_yaml_config_path)), 'r') as f:
+        x = yaml.safe_load(f)
+
+    print(f'Migrating file from {old_yaml_config_path} to {new_yaml_config_path}')
+
+    if "endpoints" in x['ors']:
+        print(f"\n--- Migrating ors.endpoints ---")
+        if_exists_move_to(x, f'ors.endpoints.matrix.u_turn_costs', f'ors.endpoints.matrix.u_turn_cost')
+
+    if "engine" in x['ors']:
+        print(f"\n--- Migrating ors.engine ---")
+
+        properties_service = [
+            "execution",
+            "force_turn_costs",
+            "maximum_distance",
+            "maximum_distance_alternative_routes",
+            "maximum_distance_avoid_areas",
+            "maximum_distance_dynamic_weights",
+            "maximum_distance_round_trip_routes",
+            "maximum_snapping_radius",
+            "maximum_speed_lower_bound",
+            "maximum_visited_nodes",
+            "maximum_waypoints",
+        ]
+
+        properties_build = [
+            "source_file",
+            "elevation",
+            "encoder_options",
+            "elevation_smoothing",
+            "encoder_flags_size",
+            "instructions",
+            "optimize",
+            "traffic",
+            "location_index_resolution",
+            "location_index_search_iterations",
+            "interpolate_bridges_and_tunnels",
+            "preparation",
+            "gtfs_file",
+            "ext_storages"
+        ]
+
+        for prop in properties_service:
+            if_exists_move_to(x, f'ors.engine.profile_default.{prop}',
+                              f'ors.engine.profile_default.service.{prop}')
+
+        for prop in properties_build:
+            if_exists_move_to(x, f'ors.engine.profile_default.{prop}',
+                              f'ors.engine.profile_default.build.{prop}')
+
+        profiles = list(x["ors"]["engine"]["profiles"].keys()).copy()
+        for profile in profiles:
+            profile_new = x["ors"]["engine"]["profiles"][profile]["profile"]
+            if_exists_move_to(x, f'ors.engine.profiles.{profile}.profile',
+                              f'ors.engine.profiles.{profile_new}.encoder_name')
+            if_exists_move_to(x, f'ors.engine.profiles.{profile}.enabled',
+                              f'ors.engine.profiles.{profile_new}.enabled')
+            for prop in properties_build:
+                if_exists_move_to(x, f'ors.engine.profiles.{profile}.{prop}',
+                                  f'ors.engine.profiles.{profile_new}.build.{prop}')
+            for prop in properties_service:
+                if_exists_move_to(x, f'ors.engine.profiles.{profile}.{prop}',
+                                  f'ors.engine.profiles.{profile_new}.service.{prop}')
+
+            if profile_new != profile:
+                remove_and_output(x, f'ors.engine.profiles.{profile}', results)
+
+        if_exists_move_to(x, f'ors.engine.source_file',
+                          f'ors.engine.profile_default.build.source_file')
+
+        if_exists_move_to(x, f'ors.engine.graphs_root_path', f'ors.engine.profile_default.graph_path')
+
+    level_string = "springdoc"
+    if level_string in x:
+        print(f"\n--- Migrating {level_string} ---")
+        if_exists_move_to(x, f'springdoc.swagger-ui',
+                          f'spring.swagger-ui')
+        if_exists_move_to(x, f'springdoc.api-docs',
+                          f'spring.api-docs')
+        if_exists_move_to(x, f'springdoc.packages-to-scan',
+                          f'spring.packages-to-scan')
+        if_exists_move_to(x, f'springdoc.pathsToMatch',
+                          f'spring.pathsToMatch')
+
+    try:
+        new_config_schema = OrsConfigYML9.model_validate(x)
+    except ValidationError as e:
+        if DEBUG:
+            print(e)
+        results['validation_errors'].append(f"Unknown config property found: {e}")
+        new_config_schema = OrsConfigYMLIgnoreExtras9.model_validate(x)
+    new_config = new_config_schema.model_dump(exclude_unset=True, by_alias=True)
+
+    print()
+
+    with open(new_yaml_config_path, 'w') as f:
+        dump = yaml.dump(new_config).replace("{}", "")
+        f.writelines(dump)
+        print(f'Wrote yml output to {f.name}')
+
+    print()
+    print()
+    info('--- Migration finished ---')
+    print_warnings_and_errors(results)
+
+
+def print_warnings_and_errors(results):
     info('You may have to act on the warnings below if the settings are relevant to your setup.')
     info('For questions please use https://ask.openrouteservice.org to get our attention.')
     if len(results['warnings']) > 0:
@@ -429,23 +552,36 @@ def migrate(json_config_path, yaml_config_path):
 
 if __name__ == "__main__":
     args = sys.argv[1:]
+
+    if not 0 < len(args) < 5:
+        print(
+            "Usage: python migrate.py <ors-source-major-version> <ors-target-major-version> ./your-ors-config.(json/yaml) ["
+            "./ors-config.yml]")
+        exit(1)
+
+    from_version = int(args[0])
+    to_version = int(args[1])
     out_file = join(Path.cwd(), 'ors-config.yml')
 
-    if not 0 < len(args) < 3:
-        print("Usage: python migrate.py ./your-ors-config.json [./ors-config.yml]")
-        exit(1)
-    elif len(args) == 2:
-        out_file = args[1]
-    elif len(args) == 1:
+    if len(args) == 4:
+        out_file = args[3]
+    elif len(args) == 3:
         if Path(out_file).exists():
             error(f"The default output file {out_file} already exists.")
             info("Aborting. Please move the file or provide an output file name as second argument to overwrite "
                  "existing files.")
             exit(1)
-    in_file = args[0]
+    in_file = args[2]
+
     # Check if in_file and out_file are absolute paths if not join with current working directory
     if not Path(in_file).is_absolute():
         in_file = join(Path.cwd(), in_file)
     if not Path(out_file).is_absolute():
         out_file = join(Path.cwd(), out_file)
-    migrate(in_file, out_file)
+
+    if from_version == 7 and to_version == 8:
+        migrate_7_to_8(in_file, out_file)
+    elif from_version == 8 and to_version == 9:
+        migrate_8_to_9(in_file, out_file)
+    else:
+        print("Invalid ors version numbers in input. Please pass either 7 & 8 or 8 & 9.")
